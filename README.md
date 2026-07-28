@@ -1,52 +1,124 @@
-# AI Autoblog WordPress Plugin
+🤖 AI Autoblog WordPress Plugin
+AI Autoblog is a powerful WordPress plugin that automatically generates SEO-optimized blog posts using AI (Google Gemini & Zhipu AI). It features AI-powered image search, automatic indexing via IndexNow, and a complete keyword management system.
 
-## Installation
+✨ Features
+🤖 AI Content Generation
+Multiple AI Providers: Google Gemini and Zhipu AI (GLM) support
 
-1. Upload the `ai-autoblog` folder to the `/wp-content/plugins/` directory
-2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Go to AI Autoblog > Settings to configure your AI grounding endpoint
-4. Add authors in AI Autoblog > Authors
-5. Add keywords in AI Autoblog > Keywords
-6. The system will automatically process keywords via cron (every minute)
+AI-Powered Image Search: Automatically finds and sets relevant featured images from Unsplash
 
-## Configuration
+Smart Keyword Generation: AI analyzes your blog title and generates the perfect image search term
 
-### AI Grounding SystemYou need to configure an AI grounding endpoint that can:
-- Research topics without using search APIs
-- Provide structured facts, summaries, and insights
-- Find free licensed images (CC0, CC BY, Wikimedia Commons)
+Automatic Content Creation: Generates complete blog posts with proper HTML formatting
 
-### JSON Configuration Files
+SEO Optimized: Creates SEO titles, meta descriptions, and proper heading structure
 
-All configuration is stored in JSON files in `/wp-content/plugins/ai-autoblog/data/`:
+Customizable Instructions: Edit blog_instructions.txt to control AI writing style and structure
 
-- `system_prompts.json` - Global AI behavior and writing rules
-- `blog_instructions.json` - SEO rules and content structure
-- `authors.json` - Author tones and writing styles
-- `keywords.json` - Keyword queue (managed via admin)
-- `external_links.json` - Whitelisted domains for external links
-- `runtime_state.json` - System state (auto-managed)
+🖼️ Image Management
+Unsplash API Integration: Search and download free, high-quality images
 
-## Manual Usage
+AI-Powered Image Selection: Scores and selects the most relevant image from 30+ results
 
-1. Add keywords with assigned authors
-2. Use "Manual Generate" to process immediately
-3. Or wait for automatic cron processing (every minute)
+Manual Image Search: Search and apply images from the admin interface
 
-## Requirements
+Featured Image Support: Automatically sets images as WordPress featured images
 
-- WordPress 5.0+
-- PHP 7.4+
-- External AI grounding system API
+Remaining Requests Display: Shows how many Unsplash API requests left this hour
 
-## Customization
+🔍 Search Engine Integration
+IndexNow Support: Automatically submits posts to Bing and Google for fast indexing
 
-You can easily modify:
-- Author writing styles in `data/authors.json`
-- SEO rules in `data/blog_instructions.json`
-- AI prompts in `data/system_prompts.json`
-- External link whitelist in `data/external_links.json`
+Bing & Google API: Configurable API keys for both search engines
 
-## Support
+Post Status Tracking: Shows indexing status in posts list
 
-For issues or customization, modify the modular PHP classes in `/includes/`.
+📊 Keyword Management
+Bulk Keyword Addition: Add multiple keywords at once
+
+Author Assignment: Assign each keyword to a specific author
+
+Category Assignment: Auto-assign categories to generated posts
+
+Status Tracking: Monitor pending, processing, and completed keywords
+
+Search & Filter: Search through keywords and sort by date
+
+Bulk Actions: Delete multiple keywords at once
+
+👤 Author Management
+Writing Styles: Customize tone, audience, and writing rules for each author
+
+Auto-Sync: Sync with WordPress users automatically
+
+Multiple Authors: Support for unlimited authors
+
+🔗 Smart Linking
+Internal Linking: Automatically links to relevant posts and pages
+
+External Linking: Configurable external links (direct or via sitemaps)
+
+Custom Anchor Text: Set custom anchor text for external links
+
+Link Preview: Test which links will be used for any keyword
+
+📈 Dashboard & Analytics
+Post Statistics: Total posts, pending keywords, posts today
+
+Recent Posts: View recently generated posts
+
+Quick Actions: Manual post generation from dashboard
+
+Indexing Stats: Track indexed vs pending posts
+
+🛠️ Admin Interface
+Clean, Modern UI: User-friendly WordPress admin interface
+
+Separate Settings: Organized AI, Console, Image, and Link settings
+
+Responsive Design: Works on all screen sizes
+
+Real-time Feedback: AJAX-powered actions with live status updates
+
+📦 Installation
+WordPress Admin Installation
+Go to Plugins > Add New in your WordPress admin
+
+Click Upload Plugin
+
+Select the ai-autoblog.zip file
+
+Click Install Now and then Activate
+
+🚀 Quick Start
+Get API Keys:
+
+Google Gemini or Zhipu AI (GLM)
+
+Unsplash
+
+Configure Plugin:
+
+Go to AI Autoblog → AI Settings (add AI key)
+
+Go to AI Autoblog → Image Settings (add Unsplash key)
+
+Add Keywords:
+
+Go to AI Autoblog → Keywords
+
+Add keywords with authors & categories
+
+Generate Posts:
+
+Automatic: Cron runs every minute
+
+Manual: AI Autoblog → Manual Generate
+
+📄 License
+GPL v2 or later
+
+🤝 Support
+For issues or feature requests, please open an issue on GitHub.
+
+Made with ❤️ for the WordPress community
