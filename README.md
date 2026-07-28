@@ -1,124 +1,159 @@
-🤖 AI Autoblog WordPress Plugin
-AI Autoblog is a powerful WordPress plugin that automatically generates SEO-optimized blog posts using AI (Google Gemini & Zhipu AI). It features AI-powered image search, automatic indexing via IndexNow, and a complete keyword management system.
+# 🤖 AI Autoblog WordPress Plugin
 
-✨ Features
-🤖 AI Content Generation
-Multiple AI Providers: Google Gemini and Zhipu AI (GLM) support
+**AI Autoblog** is a powerful WordPress plugin that automatically generates SEO-optimized blog posts using AI. It supports **Google Gemini** and **Zhipu AI (GLM)**, includes AI-powered image search, automatic IndexNow submission, and a complete keyword management system.
 
-AI-Powered Image Search: Automatically finds and sets relevant featured images from Unsplash
+---
 
-Smart Keyword Generation: AI analyzes your blog title and generates the perfect image search term
+## ✨ Features
 
-Automatic Content Creation: Generates complete blog posts with proper HTML formatting
+### 🤖 AI Content Generation
 
-SEO Optimized: Creates SEO titles, meta descriptions, and proper heading structure
+- Supports **Google Gemini** and **Zhipu AI (GLM)**
+- AI-powered image keyword generation
+- Automatically creates complete blog posts
+- SEO-optimized content with:
+  - SEO titles
+  - Meta descriptions
+  - Proper heading structure
+- Generates clean HTML content
+- Custom writing instructions via `blog_instructions.txt`
 
-Customizable Instructions: Edit blog_instructions.txt to control AI writing style and structure
+### 🖼️ Image Management
 
-🖼️ Image Management
-Unsplash API Integration: Search and download free, high-quality images
+- Unsplash API integration
+- Automatically searches and downloads high-quality images
+- AI selects the most relevant image from 30+ search results
+- Sets featured images automatically
+- Manual image search from the admin panel
+- Displays remaining Unsplash API requests
 
-AI-Powered Image Selection: Scores and selects the most relevant image from 30+ results
+### 🔍 Search Engine Integration
 
-Manual Image Search: Search and apply images from the admin interface
+- Automatic IndexNow submission
+- Supports Bing and Google indexing
+- Configurable API keys
+- Indexing status tracking
 
-Featured Image Support: Automatically sets images as WordPress featured images
+### 📊 Keyword Management
 
-Remaining Requests Display: Shows how many Unsplash API requests left this hour
+- Bulk keyword import
+- Assign keywords to specific authors
+- Assign categories
+- Status tracking:
+  - Pending
+  - Processing
+  - Completed
+- Search and filter keywords
+- Bulk delete actions
 
-🔍 Search Engine Integration
-IndexNow Support: Automatically submits posts to Bing and Google for fast indexing
+### 👤 Author Management
 
-Bing & Google API: Configurable API keys for both search engines
+- Custom writing style for each author
+- Audience and tone configuration
+- Automatic WordPress user synchronization
+- Unlimited author support
 
-Post Status Tracking: Shows indexing status in posts list
+### 🔗 Smart Linking
 
-📊 Keyword Management
-Bulk Keyword Addition: Add multiple keywords at once
+- Automatic internal linking
+- Automatic external linking
+- Sitemap-based external links
+- Custom anchor text
+- Link preview before generation
 
-Author Assignment: Assign each keyword to a specific author
+### 📈 Dashboard & Analytics
 
-Category Assignment: Auto-assign categories to generated posts
+- Total generated posts
+- Pending keywords
+- Posts generated today
+- Recently published posts
+- Manual generation shortcut
+- Indexing statistics
 
-Status Tracking: Monitor pending, processing, and completed keywords
+### 🛠️ Modern Admin Interface
 
-Search & Filter: Search through keywords and sort by date
+- Clean WordPress admin UI
+- Separate settings pages
+- Responsive design
+- AJAX-powered actions
+- Real-time feedback
 
-Bulk Actions: Delete multiple keywords at once
+---
 
-👤 Author Management
-Writing Styles: Customize tone, audience, and writing rules for each author
+## 📦 Installation
 
-Auto-Sync: Sync with WordPress users automatically
+### Install from WordPress
 
-Multiple Authors: Support for unlimited authors
+1. Go to **Plugins → Add New**
+2. Click **Upload Plugin**
+3. Upload `ai-autoblog.zip`
+4. Click **Install Now**
+5. Activate the plugin
 
-🔗 Smart Linking
-Internal Linking: Automatically links to relevant posts and pages
+---
 
-External Linking: Configurable external links (direct or via sitemaps)
+## 🚀 Quick Start
 
-Custom Anchor Text: Set custom anchor text for external links
+### 1. Obtain API Keys
 
-Link Preview: Test which links will be used for any keyword
+- Google Gemini API Key **or**
+- Zhipu AI (GLM) API Key
+- Unsplash API Key
 
-📈 Dashboard & Analytics
-Post Statistics: Total posts, pending keywords, posts today
+### 2. Configure the Plugin
 
-Recent Posts: View recently generated posts
+- **AI Autoblog → AI Settings**
+  - Add your AI API key
 
-Quick Actions: Manual post generation from dashboard
+- **AI Autoblog → Image Settings**
+  - Add your Unsplash API key
 
-Indexing Stats: Track indexed vs pending posts
+### 3. Add Keywords
 
-🛠️ Admin Interface
-Clean, Modern UI: User-friendly WordPress admin interface
+Navigate to:
 
-Separate Settings: Organized AI, Console, Image, and Link settings
+**AI Autoblog → Keywords**
 
-Responsive Design: Works on all screen sizes
+Add:
 
-Real-time Feedback: AJAX-powered actions with live status updates
+- Keyword
+- Author
+- Category
 
-📦 Installation
-WordPress Admin Installation
-Go to Plugins > Add New in your WordPress admin
+### 4. Generate Posts
 
-Click Upload Plugin
+**Automatic**
 
-Select the ai-autoblog.zip file
+- Runs every minute using WordPress Cron.
 
-Click Install Now and then Activate
+**Manual**
 
-🚀 Quick Start
-Get API Keys:
+Navigate to:
 
-Google Gemini or Zhipu AI (GLM)
+**AI Autoblog → Manual Generate**
 
-Unsplash
+---
 
-Configure Plugin:
+## 📋 Requirements
 
-Go to AI Autoblog → AI Settings (add AI key)
+- WordPress 6.0+
+- PHP 8.1+
+- Google Gemini or Zhipu AI API Key
+- Unsplash API Key
+- Internet connection
 
-Go to AI Autoblog → Image Settings (add Unsplash key)
+---
 
-Add Keywords:
+## 📄 License
 
-Go to AI Autoblog → Keywords
+Licensed under the **GPL v2 or later**.
 
-Add keywords with authors & categories
+---
 
-Generate Posts:
+## 🤝 Support
 
-Automatic: Cron runs every minute
+If you find a bug or would like to request a feature, please open an issue on GitHub.
 
-Manual: AI Autoblog → Manual Generate
+---
 
-📄 License
-GPL v2 or later
-
-🤝 Support
-For issues or feature requests, please open an issue on GitHub.
-
-Made with ❤️ for the WordPress community
+Made with ❤️ for the WordPress community.
