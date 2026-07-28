@@ -1,0 +1,245 @@
+/* assets/admin.css */
+
+.aia-dashboard {
+    max-width: 1200px;
+}
+
+.aia-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.aia-stat-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.aia-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: #2271b1;
+    margin: 10px 0;
+}
+
+.stat-status {
+    font-size: 18px;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.stat-status.processing {
+    background: #f0ad4e;
+    color: #fff;
+}
+
+.stat-status.idle {
+    background: #5cb85c;
+    color: #fff;
+}
+
+.aia-quick-actions {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.aia-quick-actions .button {
+    margin-right: 10px;
+}
+
+.aia-add-keyword-form,
+.aia-add-author-form,
+.aia-manual-generator {
+    background: #fff;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.aia-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.aia-status-pending {
+    background: #f0ad4e;
+    color: #fff;
+}
+
+.aia-status-processing {
+    background: #5bc0de;
+    color: #fff;
+}
+
+.aia-status-done {
+    background: #5cb85c;
+    color: #fff;
+}
+
+.aia-posts-list,
+.aia-keywords-list,
+.aia-authors-list {
+    background: #fff;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+}
+
+.aia-generation-info {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.aia-generation-info ol {
+    margin-left: 20px;
+}
+
+.aia-generation-info li {
+    margin: 10px 0;
+}
+
+.aia-advanced-settings {
+    background: #fff;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+}
+
+.aia-advanced-settings ul {
+    list-style: disc;
+    margin-left: 20px;
+}
+
+.aia-advanced-settings code {
+    background: #f1f1f1;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+    .aia-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* assets/admin.css - Add these styles at the end */
+
+/* ==================== INDEXNOW STYLES ==================== */
+
+.aia-indexnow-stats {
+    margin: 20px 0;
+}
+
+.aia-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.aia-stat-card {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.aia-stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.aia-stat-card h3 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.aia-stat-card .stat-number {
+    font-size: 28px;
+    font-weight: bold;
+    color: #2271b1;
+    margin: 5px 0;
+}
+
+/* IndexNow status column in posts list */
+.column-aia_index_status {
+    width: 120px;
+}
+
+.aia-indexnow-sync {
+    font-size: 11px !important;
+    padding: 0 6px !important;
+    line-height: 1.5 !important;
+    min-height: 20px !important;
+    margin-left: 5px !important;
+}
+
+/* Test result styles */
+#aia_test_indexnow_result {
+    font-weight: 500;
+    display: inline-block;
+    margin-left: 10px;
+}
+
+#aia_test_indexnow_result.success {
+    color: #28a745;
+}
+
+#aia_test_indexnow_result.error {
+    color: #dc3545;
+}
+
+#aia_test_indexnow_result.loading {
+    color: #f0ad4e;
+}
+
+#aia_indexnow_bulk_status {
+    font-weight: 500;
+    margin-left: 10px;
+}
+
+#aia_indexnow_bulk_status.success {
+    color: #28a745;
+}
+
+#aia_indexnow_bulk_status.error {
+    color: #dc3545;
+}
+
+#aia_indexnow_bulk_status.loading {
+    color: #f0ad4e;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+    .aia-stat-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .aia-stat-grid {
+        grid-template-columns: 1fr;
+    }
+}

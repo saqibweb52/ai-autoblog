@@ -1,0 +1,2 @@
+[2026-07-28 07:45:23] [ERROR] ❌ AI FAILED: Returned blog title or too long: 'ai'
+[2026-07-28 07:45:23] [WARNING] AI returned title instead of keyword, using fallback
