@@ -1,224 +1,201 @@
 [
     {
-        "keyword": "deep learning ai",
-        "author_id": 3,
-        "status": "done",
-        "created_at": "2026-06-18 10:13:22"
-    },
-    {
-        "keyword": "ai",
-        "author_id": 3,
-        "status": "done",
-        "created_at": "2026-06-18 10:13:22"
-    },
-    {
-        "keyword": "Bloging issues",
-        "author_id": 2,
-        "status": "done",
-        "created_at": "2026-06-20 05:35:15"
-    },
-    {
-        "keyword": "new tech ai",
-        "author_id": 3,
-        "status": "done",
-        "created_at": "2026-06-20 05:36:29"
-    },
-    {
-        "keyword": "super ai",
-        "author_id": 3,
-        "status": "done",
-        "created_at": "2026-06-20 05:36:29"
-    },
-    {
-        "keyword": "genrale ai",
-        "author_id": 3,
-        "status": "done",
-        "created_at": "2026-06-20 05:36:29"
-    },
-    {
-        "keyword": "humans will be lezy with ai.",
-        "author_id": 3,
-        "status": "done",
-        "created_at": "2026-06-20 05:36:29"
-    },
-    {
-        "keyword": "seo marketing",
-        "author_id": 2,
-        "status": "done",
-        "created_at": "2026-06-20 08:40:57"
-    },
-    {
-        "keyword": "seo keyword research",
-        "author_id": 2,
-        "status": "done",
-        "created_at": "2026-06-20 08:40:57"
-    },
-    {
-        "keyword": "Auto Blog post Using AI",
-        "author_id": 2,
-        "status": "done",
-        "created_at": "2026-06-27 10:02:40"
-    },
-    {
         "keyword": "AI Hacking",
         "author_id": 2,
         "status": "done",
-        "created_at": "2026-06-27 11:01:45"
-    },
-    {
-        "keyword": "Ai Using Tips",
-        "author_id": 2,
-        "status": "done",
-        "created_at": "2026-06-27 11:44:39"
-    },
-    {
-        "keyword": "Super AI",
-        "author_id": 3,
-        "status": "done",
-        "created_at": "2026-06-27 12:05:33"
-    },
-    {
-        "keyword": "Next Gen Ai",
-        "author_id": 3,
-        "status": "done",
-        "created_at": "2026-06-27 12:31:07"
-    },
-    {
-        "keyword": "Ai Danger",
-        "author_id": 3,
-        "status": "done",
-        "created_at": "2026-06-27 12:34:28"
+        "created_at": "2026-06-27 11:01:45",
+        "id": "kw_6a69da61396c33.68622455"
     },
     {
         "keyword": "Danger of Ai",
         "author_id": 3,
         "status": "done",
-        "created_at": "2026-06-28 10:38:12"
+        "created_at": "2026-06-28 10:38:12",
+        "id": "kw_6a69da61396c80.31326083"
     },
     {
         "keyword": "New Upcoming ais",
         "author_id": 1,
         "status": "done",
-        "created_at": "2026-06-28 10:52:10"
+        "created_at": "2026-06-28 10:52:10",
+        "id": "kw_6a69da61396c94.58855902"
     },
     {
         "keyword": "Business development manager",
         "author_id": 3,
         "status": "done",
-        "created_at": "2026-06-28 11:01:13"
+        "created_at": "2026-06-28 11:01:13",
+        "id": "kw_6a69da61396ca0.47031704"
     },
     {
         "keyword": "ai",
         "author_id": 2,
         "status": "done",
-        "created_at": "2026-06-28 11:03:28"
+        "created_at": "2026-06-28 11:03:28",
+        "id": "kw_6a69da61396cb0.70837112"
     },
     {
         "keyword": "Web development",
         "author_id": 2,
         "status": "done",
-        "created_at": "2026-07-19 10:31:10"
+        "created_at": "2026-07-19 10:31:10",
+        "id": "kw_6a69da61396cc3.99452302"
     },
     {
         "keyword": "intelligent software",
         "author_id": 2,
         "status": "done",
-        "created_at": "2026-07-19 11:51:07"
+        "created_at": "2026-07-19 11:51:07",
+        "id": "kw_6a69da61396cd6.22558128"
     },
     {
         "keyword": "Intelligent Software",
         "author_id": 2,
         "status": "done",
-        "created_at": "2026-07-20 09:59:32"
+        "created_at": "2026-07-20 09:59:32",
+        "id": "kw_6a69da61396ce3.87474868"
     },
     {
         "keyword": "intelligent software",
         "author_id": 1,
         "status": "done",
-        "created_at": "2026-07-20 10:10:03"
+        "created_at": "2026-07-20 10:10:03",
+        "id": "kw_6a69da61396cf8.48474830"
     },
     {
         "keyword": "Ai Types",
         "author_id": 3,
         "status": "done",
-        "created_at": "2026-07-20 10:17:25"
+        "created_at": "2026-07-20 10:17:25",
+        "id": "kw_6a69da61396d09.95294069"
     },
     {
         "keyword": "seo marketing",
         "author_id": 1,
         "status": "done",
-        "created_at": "2026-07-20 10:22:15"
+        "created_at": "2026-07-20 10:22:15",
+        "id": "kw_6a69da61396d17.03110794"
     },
     {
         "keyword": "data scince",
         "author_id": 1,
         "status": "done",
-        "created_at": "2026-07-20 10:25:47"
+        "created_at": "2026-07-20 10:25:47",
+        "id": "kw_6a69da61396d21.01300738"
     },
     {
         "keyword": "blow writing",
         "author_id": 2,
         "status": "done",
-        "created_at": "2026-07-20 11:08:30"
+        "created_at": "2026-07-20 11:08:30",
+        "id": "kw_6a69da61396d33.75820798"
     },
     {
         "keyword": "wordpress tips",
         "author_id": 1,
         "status": "done",
-        "created_at": "2026-07-20 11:24:52"
+        "created_at": "2026-07-20 11:24:52",
+        "id": "kw_6a69da61396d48.71484478"
     },
     {
         "keyword": "keyword research",
         "author_id": 1,
         "status": "done",
-        "created_at": "2026-07-20 11:30:22"
+        "created_at": "2026-07-20 11:30:22",
+        "id": "kw_6a69da61396d52.27029635"
     },
     {
         "keyword": "AI bubble",
         "author_id": 2,
         "status": "done",
-        "created_at": "2026-07-20 11:35:58"
+        "created_at": "2026-07-20 11:35:58",
+        "id": "kw_6a69da61396d67.97651169"
     },
     {
         "keyword": "Ai Power Consumption",
         "author_id": 3,
         "status": "done",
-        "created_at": "2026-07-21 09:37:19"
+        "created_at": "2026-07-21 09:37:19",
+        "id": "kw_6a69da61396d73.25706012"
     },
     {
         "keyword": "New Chines Ais",
         "author_id": 1,
         "status": "done",
-        "created_at": "2026-07-21 09:51:13"
+        "created_at": "2026-07-21 09:51:13",
+        "id": "kw_6a69da61396d88.78110731"
     },
     {
         "keyword": "Bloging",
         "author_id": 1,
         "status": "done",
-        "created_at": "2026-07-21 10:42:27"
+        "created_at": "2026-07-21 10:42:27",
+        "id": "kw_6a69da61396d91.58388825"
     },
     {
         "keyword": "New processer type",
         "author_id": 3,
         "status": "done",
-        "created_at": "2026-07-21 11:23:44"
+        "created_at": "2026-07-21 11:23:44",
+        "id": "kw_6a69da61396da2.64519020"
     },
     {
         "keyword": "Next Gen Ai",
         "author_id": 1,
         "status": "done",
-        "created_at": "2026-07-21 11:50:55"
+        "created_at": "2026-07-21 11:50:55",
+        "id": "kw_6a69da61396db9.72799850"
     },
     {
         "keyword": "smart chatbot",
         "author_id": 2,
         "status": "done",
-        "created_at": "2026-07-27 10:40:34"
+        "created_at": "2026-07-27 10:40:34",
+        "id": "kw_6a69da61396dc0.98066228"
     },
     {
         "keyword": "ai search engine",
         "author_id": 1,
         "status": "done",
-        "created_at": "2026-07-27 10:49:12"
+        "created_at": "2026-07-27 10:49:12",
+        "id": "kw_6a69da61396dd0.30457583"
+    },
+    {
+        "keyword": "ai phone answering service",
+        "author_id": 2,
+        "status": "processing",
+        "created_at": "2026-07-28 11:18:03",
+        "id": "kw_6a69da61396de8.83332605"
+    },
+    {
+        "keyword": "wordpress tips",
+        "author_id": 3,
+        "status": "processing",
+        "created_at": "2026-07-28 11:21:09",
+        "id": "kw_6a69da61396df8.45090567"
+    },
+    {
+        "keyword": "laravel tips",
+        "author_id": 1,
+        "status": "done",
+        "created_at": "2026-07-29 08:29:22",
+        "id": "kw_6a69da61396e00.28869720"
+    },
+    {
+        "keyword": "wordpress seo",
+        "author_id": 2,
+        "status": "done",
+        "created_at": "2026-07-29 08:39:31",
+        "id": "kw_6a69da61396e23.89410846"
+    },
+    {
+        "id": "kw_6a69dc80bf0366.36699332",
+        "keyword": "wordpress",
+        "author_id": 1,
+        "categories": [
+            33
+        ],
+        "status": "done",
+        "created_at": "2026-07-29 10:57:04"
     }
 ]

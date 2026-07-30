@@ -8,69 +8,63 @@ if (!defined('ABSPATH')) {
 class AIA_Image_Manager {
     
     private $unsplash_access_key;
-    private $ai_provider;
-    private $api_key;
-    private $model;
     
     public function __construct() {
         $this->unsplash_access_key = get_option('aia_unsplash_access_key', '');
-        $this->ai_provider = get_option('aia_ai_provider', 'gemini');
-        $this->api_key = $this->get_api_key_for_provider();
-        $this->model = $this->get_model_for_provider();
-    }
-    
-    private function get_api_key_for_provider() {
-        $provider = get_option('aia_ai_provider', 'gemini');
-        if ($provider === 'gemini') {
-            return get_option('aia_api_key', '');
-        } elseif ($provider === 'glm') {
-            return get_option('aia_glm_api_key', '');
-        }
-        return '';
-    }
-    
-    private function get_model_for_provider() {
-        $provider = get_option('aia_ai_provider', 'gemini');
-        if ($provider === 'gemini') {
-            return get_option('aia_gemini_model', 'gemini-2.0-flash');
-        } elseif ($provider === 'glm') {
-            return get_option('aia_glm_model', 'glm-4-flash');
-        }
-        return '';
     }
     
     /**
-     * Main method to get image for post - AI Powered
+     * Main method to get image for post - uses blog keyword directly
      * NO FALLBACKS - returns false if anything fails
      */
     public function get_image_for_post($post_data) {
         $logger = new AIA_Logger();
-        $logger->log("Starting AI-powered image search for post: " . ($post_data['title'] ?? 'NOT SET'), 'info');
         
-        // Step 1: Generate search keyword using AI
-        $search_keyword = $this->generate_ai_search_keyword($post_data);
+        // Debug: log what we received
+        $logger->log("get_image_for_post received post_data: " . json_encode(array_keys($post_data)), 'debug');
         
-        // If no keyword generated, fail immediately
-        if (empty($search_keyword) || $search_keyword === false) {
-            $logger->log("❌ AI FAILED: Could not generate a search keyword. Image search aborted.", 'error');
+        // Step 1: Extract keyword
+        $keyword = '';
+        if (is_array($post_data)) {
+            $keyword = $post_data['keyword'] ?? '';
+        } elseif (is_string($post_data)) {
+            $keyword = $post_data;
+        } else {
+            $logger->log("FAILED: Post data is not an array or string. Type: " . gettype($post_data), 'error');
             return false;
         }
         
-        $logger->log("✅ AI generated search keyword: " . $search_keyword, 'info');
+        // If keyword is empty or invalid
+        if (empty($keyword) || $keyword === 'Array') {
+            $logger->log("FAILED: No valid keyword provided for image search. Received: '" . print_r($post_data, true) . "'", 'error');
+            return false;
+        }
         
-        // Step 2: Search Unsplash with the keyword
-        $images = $this->search_unsplash_with_keyword($search_keyword);
+        $logger->log("Using blog keyword for image search: '" . $keyword . "'", 'info');
+        
+        // Step 2: Search Unsplash with the keyword - get 30 images for better selection
+        $images = $this->search_unsplash_with_keyword($keyword, 30);
         
         if (empty($images) || !is_array($images)) {
-            $logger->log("❌ AI FAILED: No images found for keyword: '" . $search_keyword . "'", 'error');
+            $logger->log("FAILED: No images found for keyword: '" . $keyword . "'", 'error');
             return false;
         }
         
-        // Step 3: Score and select the best image
-        $selected_image = $this->select_best_image($images, $post_data);
+        $logger->log("Found " . count($images) . " images for keyword: '" . $keyword . "'", 'debug');
+        
+        // Step 3: Score images
+        $scored_images = $this->score_images($images, $keyword);
+        
+        if (empty($scored_images)) {
+            $logger->log("FAILED: No scored images available", 'error');
+            return false;
+        }
+        
+        // Step 4: Select the highest scoring image
+        $selected_image = $scored_images[0]['image'] ?? null;
         
         if (!$selected_image) {
-            $logger->log("❌ AI FAILED: No suitable image found after scoring", 'error');
+            $logger->log("FAILED: No suitable image found from " . count($scored_images) . " scored results", 'error');
             return false;
         }
         
@@ -80,11 +74,12 @@ class AIA_Image_Manager {
                     $selected_image['urls']['small'] ?? '';
         
         if (empty($image_url)) {
-            $logger->log("❌ AI FAILED: Selected image has no valid URL", 'error');
+            $logger->log("FAILED: Selected image has no valid URL. Image data: " . json_encode(array_keys($selected_image)), 'error');
             return false;
         }
         
-        $logger->log("✅ AI SUCCESS: Selected image for post: " . substr($image_url, 0, 100) . '...', 'info');
+        $logger->log("SUCCESS: Selected image with score: " . $scored_images[0]['score'] . " for post", 'info');
+        $logger->log("Image URL: " . substr($image_url, 0, 100) . '...', 'debug');
         
         // Track download for Unsplash (required by their terms)
         if (isset($selected_image['links']['download_location'])) {
@@ -98,238 +93,41 @@ class AIA_Image_Manager {
         
         return [
             'url' => $image_url,
-            'alt' => $selected_image['alt_description'] ?? $post_data['keyword'] ?? 'Featured image',
+            'alt' => $keyword,
             'credit' => $selected_image['user']['name'] ?? 'Unsplash',
-            'id' => $selected_image['id'] ?? ''
+            'id' => $selected_image['id'] ?? '',
+            'score' => $scored_images[0]['score'] ?? 0
         ];
-    }
-    
-    /**
-     * Generate AI search keyword for the post
-     * ONLY uses Title and Keyword - NOT the full content
-     * NO FALLBACK - returns false if AI fails
-     */
-    public function generate_ai_search_keyword($post_data) {
-        $logger = new AIA_Logger();
-        
-        // Check if AI API key is available
-        if (empty($this->api_key)) {
-            $logger->log("❌ AI FAILED: No AI API key configured", 'error');
-            return false;
-        }
-        
-        $title = $post_data['title'] ?? '';
-        $keyword = $post_data['keyword'] ?? '';
-        $meta_description = $post_data['meta_description'] ?? '';
-        
-        // If no title, fail
-        if (empty($title)) {
-            $logger->log("❌ AI FAILED: No title provided", 'error');
-            return false;
-        }
-        
-        // Build the prompt - ONLY use title and keyword
-        $system_prompt = "You are an expert at finding the perfect image search keyword for blog posts.
-
-Generate a SHORT, SPECIFIC search keyword (2-3 words) for finding the most relevant image on Unsplash.
-
-CRITICAL RULES:
-1. Return ONLY the search keyword, nothing else
-2. Use 2-3 words maximum
-3. Focus on the MAIN VISUAL SUBJECT
-4. Use CONCRETE, VISUAL words
-5. Complete your keyword - do NOT cut off
-6. DO NOT return the blog title
-7. DO NOT return more than 3 words
-
-EXAMPLES:
-- Blog about 'Chinese AI Technology' → 'chinese ai technology'
-- Blog about 'Smart Chatbots' → 'smart chatbot interface'
-- Blog about 'Quantum Physics' → 'quantum physics concept'
-- Blog about 'Next Gen Technology' → 'future technology concept'
-
-Return ONLY the 2-3 word search keyword, no explanation, no quotes, no extra text.";
-        
-        $user_prompt = "Blog Title: " . $title;
-        if (!empty($keyword)) {
-            $user_prompt .= "\nFocus Keyword: " . $keyword;
-        }
-        if (!empty($meta_description)) {
-            $user_prompt .= "\nBlog Description: " . $meta_description;
-        }
-        $user_prompt .= "\n\nGenerate a 2-3 word image search keyword for this blog post:";
-        
-        // Call AI
-        if ($this->ai_provider === 'gemini') {
-            $result = $this->call_gemini_for_keyword($system_prompt, $user_prompt);
-        } elseif ($this->ai_provider === 'glm') {
-            $result = $this->call_glm_for_keyword($system_prompt, $user_prompt);
-        } else {
-            $logger->log("❌ AI FAILED: Invalid AI provider", 'error');
-            return false;
-        }
-        
-        // Check if we got a response
-        if (empty($result)) {
-            $logger->log("❌ AI FAILED: No response from AI", 'error');
-            return false;
-        }
-        
-        // Clean the result
-        $result = trim($result);
-        $result = preg_replace('/[^a-zA-Z0-9\s]/', '', $result);
-        $result = preg_replace('/^(search keyword|keyword|search term):\s*/i', '', $result);
-        $result = trim($result);
-        
-        // Check if the result is the blog title (too long or matches title)
-        if (strlen($result) > 30 || strpos(strtolower($title), strtolower($result)) !== false) {
-            $logger->log("❌ AI FAILED: Returned blog title or too long: '" . $result . "'", 'error');
-            return false;
-        }
-        
-        // Split into words
-        $words = explode(' ', $result);
-        $words = array_filter($words, function($w) {
-            return strlen($w) > 1;
-        });
-        $words = array_values($words);
-        
-        // Must have at least 2 words
-        if (count($words) < 2) {
-            $logger->log("❌ AI FAILED: Generated less than 2 words: '" . $result . "'", 'error');
-            return false;
-        }
-        
-        // Must have at most 4 words
-        if (count($words) > 4) {
-            $logger->log("❌ AI FAILED: Generated too many words (" . count($words) . "): '" . $result . "'", 'error');
-            return false;
-        }
-        
-        // Check if any word is incomplete
-        $incomplete_patterns = array('chines$', 'process$', 'technolo$', 'artifici$', 'intellig$', 'comput$', 'generat$');
-        foreach ($words as $word) {
-            foreach ($incomplete_patterns as $pattern) {
-                if (preg_match('/' . $pattern . '/i', $word)) {
-                    $logger->log("❌ AI FAILED: Incomplete word detected: '" . $word . "' in '" . $result . "'", 'error');
-                    return false;
-                }
-            }
-        }
-        
-        // Success
-        $result_string = implode(' ', $words);
-        $logger->log("✅ AI generated keyword: '" . $result_string . "'", 'debug');
-        return $result_string;
-    }
-    
-    /**
-     * Call Gemini for keyword generation
-     */
-    private function call_gemini_for_keyword($system_prompt, $user_prompt) {
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->api_key}";
-        
-        $full_prompt = $system_prompt . "\n\n" . $user_prompt;
-        
-        $body = array(
-            'contents' => array(
-                array(
-                    'parts' => array(
-                        array('text' => $full_prompt)
-                    )
-                )
-            ),
-            'generationConfig' => array(
-                'temperature' => 0.3,
-                'maxOutputTokens' => 50,
-                'topP' => 0.95
-            )
-        );
-        
-        $response = wp_remote_post($url, array(
-            'headers' => array('Content-Type' => 'application/json'),
-            'body' => json_encode($body),
-            'timeout' => 30
-        ));
-        
-        if (is_wp_error($response)) {
-            return null;
-        }
-        
-        $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
-        
-        if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-            return trim($data['candidates'][0]['content']['parts'][0]['text']);
-        }
-        
-        return null;
-    }
-    
-    /**
-     * Call GLM for keyword generation
-     */
-    private function call_glm_for_keyword($system_prompt, $user_prompt) {
-        $url = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-        
-        $messages = array(
-            array('role' => 'system', 'content' => $system_prompt),
-            array('role' => 'user', 'content' => $user_prompt)
-        );
-        
-        $body = array(
-            'model' => $this->model,
-            'messages' => $messages,
-            'temperature' => 0.3,
-            'max_tokens' => 50
-        );
-        
-        $response = wp_remote_post($url, array(
-            'headers' => array(
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . $this->api_key
-            ),
-            'body' => json_encode($body),
-            'timeout' => 30
-        ));
-        
-        if (is_wp_error($response)) {
-            return null;
-        }
-        
-        $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
-        
-        if (isset($data['choices'][0]['message']['content'])) {
-            return trim($data['choices'][0]['message']['content']);
-        }
-        
-        return null;
     }
     
     /**
      * Search Unsplash with a specific keyword
      */
-    public function search_unsplash_with_keyword($keyword) {
+    public function search_unsplash_with_keyword($keyword, $per_page = 10) {
         $logger = new AIA_Logger();
         
         if (empty($this->unsplash_access_key)) {
-            $logger->log("❌ FAILED: Unsplash API key not configured", 'error');
+            $logger->log("UNSPLASH FAILED: API key not configured", 'error');
             return array();
         }
+        
+        // Limit per_page to max 30 (Unsplash limit)
+        $per_page = min(30, max(1, intval($per_page)));
         
         $encoded_keyword = urlencode($keyword);
         
         $url = 'https://api.unsplash.com/search/photos';
         $params = array(
             'query' => $encoded_keyword,
-            'per_page' => 30,
+            'per_page' => $per_page,
             'orientation' => 'landscape',
             'order_by' => 'relevance'
         );
         
         $query_string = http_build_query($params);
         $full_url = $url . '?' . $query_string;
+        
+        $logger->log("Searching Unsplash with query: '" . $keyword . "' (per_page: " . $per_page . ")", 'debug');
         
         $response = wp_remote_get($full_url, array(
             'headers' => array(
@@ -339,7 +137,7 @@ Return ONLY the 2-3 word search keyword, no explanation, no quotes, no extra tex
         ));
         
         if (is_wp_error($response)) {
-            $logger->log("❌ FAILED: Unsplash search error: " . $response->get_error_message(), 'error');
+            $logger->log("UNSPLASH FAILED: Request error - " . $response->get_error_message(), 'error');
             return array();
         }
         
@@ -347,154 +145,187 @@ Return ONLY the 2-3 word search keyword, no explanation, no quotes, no extra tex
         $body = wp_remote_retrieve_body($response);
         $data = json_decode($body, true);
         
+        if ($status_code === 401) {
+            $logger->log("UNSPLASH FAILED: Invalid API key (401)", 'error');
+            return array();
+        }
+        
+        if ($status_code === 403) {
+            $logger->log("UNSPLASH FAILED: Forbidden - check API key permissions (403)", 'error');
+            return array();
+        }
+        
         if ($status_code === 429) {
-            $logger->log("❌ FAILED: Unsplash rate limit reached", 'error');
+            $logger->log("UNSPLASH FAILED: Rate limit exceeded (429)", 'error');
             return array();
         }
         
-        if ($status_code !== 200 || !isset($data['results'])) {
-            $logger->log("❌ FAILED: Unsplash returned status: " . $status_code, 'error');
+        if ($status_code !== 200) {
+            $logger->log("UNSPLASH FAILED: HTTP " . $status_code . " - " . substr($body, 0, 200), 'error');
             return array();
         }
         
-        $logger->log("✅ Found " . count($data['results']) . " images for keyword: {$keyword}", 'debug');
+        if (!isset($data['results'])) {
+            $logger->log("UNSPLASH FAILED: No 'results' field in response", 'error');
+            return array();
+        }
         
+        if (empty($data['results'])) {
+            $logger->log("UNSPLASH FAILED: No results found for keyword: '" . $keyword . "'", 'error');
+            return array();
+        }
+        
+        $logger->log("UNSPLASH SUCCESS: Found " . count($data['results']) . " images", 'info');
         return $data['results'];
     }
     
     /**
-     * Select the best image from search results
+     * Score images based on relevance to keyword
      */
-    public function select_best_image($images, $post_data) {
+    public function score_images($images, $keyword) {
         $logger = new AIA_Logger();
         
         if (empty($images)) {
-            $logger->log("❌ FAILED: No images to score", 'error');
-            return null;
+            $logger->log("SCORE FAILED: No images to score", 'error');
+            return array();
         }
         
-        // Score each image
-        $scored_images = $this->score_images($images, $post_data);
-        
-        if (empty($scored_images)) {
-            $logger->log("❌ FAILED: No images scored", 'error');
-            return null;
+        if (is_array($keyword)) {
+            $keyword = $keyword['keyword'] ?? $keyword['title'] ?? '';
+            $logger->log("Keyword was array, extracted: '" . $keyword . "'", 'debug');
         }
         
-        // Sort by score (highest first)
-        usort($scored_images, function($a, $b) {
-            return $b['score'] - $a['score'];
-        });
-        
-        // Log top 3 scores
-        $logger->log("Top 3 image scores:", 'debug');
-        foreach (array_slice($scored_images, 0, 3) as $idx => $item) {
-            $score = $item['score'];
-            $desc = substr($item['description'] ?? $item['alt'] ?? 'No description', 0, 50);
-            $logger->log("  #" . ($idx + 1) . " Score: {$score} - {$desc}", 'debug');
+        if (empty($keyword)) {
+            $logger->log("SCORE FAILED: No keyword provided for scoring", 'error');
+            return array();
         }
         
-        $best_image = $scored_images[0]['image'] ?? null;
-        
-        if ($best_image) {
-            $logger->log("✅ Best image selected with score: " . $scored_images[0]['score'], 'debug');
-        } else {
-            $logger->log("❌ FAILED: No best image found", 'error');
-        }
-        
-        return $best_image;
-    }
-    
-    /**
-     * Score images based on relevance to post
-     */
-    public function score_images($images, $post_data) {
-        $title = strtolower($post_data['title'] ?? '');
-        $keyword = strtolower($post_data['keyword'] ?? '');
-        $content = strtolower(strip_tags($post_data['content'] ?? ''));
-        $content = substr($content, 0, 500);
-        
-        // Extract keywords
-        $stop_words = array('the', 'and', 'for', 'with', 'your', 'what', 'from', 'this', 'that', 'have', 'are', 'you', 'can', 'will', 'about', 'they', 'their', 'would', 'could', 'should', 'been', 'were', 'does', 'has', 'had', 'when', 'where', 'why', 'how', 'which', 'who', 'whom', 'whose', 'beyond', 'blue', 'links', 'future', 'finding', 'hype', 'unpacking', 'rise', 'new');
-        
-        $title_keywords = array_unique(array_filter(explode(' ', $title), function($w) use ($stop_words) {
-            return strlen($w) > 3 && !in_array($w, $stop_words);
-        }));
-        
-        $keyword_terms = array_unique(array_filter(explode(' ', $keyword), function($w) {
+        $keyword_lower = strtolower($keyword);
+        $keyword_terms = array_unique(array_filter(explode(' ', $keyword_lower), function($w) {
             return strlen($w) > 2;
         }));
         
-        $content_keywords = array_unique(array_filter(explode(' ', $content), function($w) use ($stop_words) {
-            return strlen($w) > 4 && !in_array($w, $stop_words);
-        }));
-        $content_keywords = array_slice($content_keywords, 0, 20);
-        
-        $all_keywords = array_merge($title_keywords, $keyword_terms, $content_keywords);
-        $all_keywords = array_unique($all_keywords);
+        // Also split by common separators (hyphens, underscores)
+        $keyword_terms_extra = array();
+        foreach ($keyword_terms as $term) {
+            $split = preg_split('/[-_]/', $term);
+            foreach ($split as $part) {
+                if (strlen($part) > 2) {
+                    $keyword_terms_extra[] = $part;
+                }
+            }
+        }
+        $keyword_terms = array_unique(array_merge($keyword_terms, $keyword_terms_extra));
         
         $scored_images = array();
         
         foreach ($images as $index => $image) {
             $score = 0;
             $match_count = 0;
+            $matched_terms = array();
             
             $description = strtolower($image['description'] ?? '');
             $alt = strtolower($image['alt_description'] ?? '');
             
+            // Extract tags from Unsplash
             $tags = array();
             if (isset($image['tags']) && is_array($image['tags'])) {
                 foreach ($image['tags'] as $tag) {
-                    $tags[] = strtolower($tag['title'] ?? $tag);
+                    $tag_text = strtolower($tag['title'] ?? $tag);
+                    $tags[] = $tag_text;
+                    // Split tag by spaces for partial matching
+                    $tag_parts = explode(' ', $tag_text);
+                    foreach ($tag_parts as $part) {
+                        if (strlen($part) > 2) {
+                            $tags[] = $part;
+                        }
+                    }
                 }
+                $tags = array_unique($tags);
             }
             
-            foreach ($all_keywords as $kw) {
-                if (!empty($kw) && strlen($kw) > 2) {
-                    // Exact match in description
-                    if (preg_match('/\b' . preg_quote($kw, '/') . '\b/', $description)) {
-                        $score += 12;
+            // Score based on keyword terms
+            foreach ($keyword_terms as $term) {
+                if (!empty($term) && strlen($term) > 2) {
+                    $term_lower = strtolower($term);
+                    $found = false;
+                    
+                    // Check full keyword match in description (highest weight)
+                    if (strpos($description, $keyword_lower) !== false) {
+                        $score += 20;
                         $match_count++;
-                    } elseif (strpos($description, $kw) !== false) {
-                        $score += 6;
-                        $match_count++;
+                        $matched_terms[] = $keyword_lower;
+                        $found = true;
                     }
                     
-                    // Exact match in alt
-                    if (preg_match('/\b' . preg_quote($kw, '/') . '\b/', $alt)) {
+                    // Check term in description
+                    if (!$found && strpos($description, $term_lower) !== false) {
                         $score += 10;
                         $match_count++;
-                    } elseif (strpos($alt, $kw) !== false) {
-                        $score += 5;
-                        $match_count++;
+                        $matched_terms[] = $term_lower;
+                        $found = true;
                     }
                     
-                    // Match in tags
-                    foreach ($tags as $tag) {
-                        if (strpos($tag, $kw) !== false) {
-                            $score += 3;
-                            $match_count++;
+                    // Check full keyword match in alt
+                    if (!$found && strpos($alt, $keyword_lower) !== false) {
+                        $score += 15;
+                        $match_count++;
+                        $matched_terms[] = $keyword_lower;
+                        $found = true;
+                    }
+                    
+                    // Check term in alt
+                    if (!$found && strpos($alt, $term_lower) !== false) {
+                        $score += 8;
+                        $match_count++;
+                        $matched_terms[] = $term_lower;
+                        $found = true;
+                    }
+                    
+                    // Check in tags
+                    if (!$found) {
+                        foreach ($tags as $tag) {
+                            if (strpos($tag, $term_lower) !== false) {
+                                $score += 5;
+                                $match_count++;
+                                $matched_terms[] = $term_lower;
+                                $found = true;
+                                break;
+                            }
                         }
                     }
                 }
             }
             
+            // Boost score for images with good description and alt text
+            if (!empty($description) && strlen($description) > 10) {
+                $score += 5;
+            }
+            if (!empty($alt) && strlen($alt) > 5) {
+                $score += 3;
+            }
+            
             // Position bonus (first images are more relevant)
             if ($index < 5) {
-                $score += (5 - $index) * 2;
+                $score += (5 - $index) * 3;
             }
             
             // Quality bonuses
             if ($image['width'] > $image['height']) {
-                $score += 3;
+                $score += 3; // Landscape is preferred
             }
             if ($image['width'] >= 1200 && $image['height'] >= 600) {
-                $score += 3;
+                $score += 5; // High resolution
             }
-            if (!empty($description) && !empty($alt)) {
-                $score += 5;
+            if (isset($image['likes']) && $image['likes'] > 100) {
+                $score += 3; // Popular images
             }
-            if (isset($image['likes']) && $image['likes'] > 50) {
+            if (isset($image['likes']) && $image['likes'] > 500) {
+                $score += 5; // Very popular images
+            }
+            
+            // Color diversity bonus (Unsplash provides color data)
+            if (!empty($image['color'])) {
                 $score += 2;
             }
             
@@ -502,10 +333,22 @@ Return ONLY the 2-3 word search keyword, no explanation, no quotes, no extra tex
                 'image' => $image,
                 'score' => $score,
                 'match_count' => $match_count,
+                'matched_terms' => $matched_terms,
                 'description' => $description,
                 'alt' => $alt,
                 'index' => $index
             );
+        }
+        
+        // Sort by score descending
+        usort($scored_images, function($a, $b) {
+            return $b['score'] - $a['score'];
+        });
+        
+        // Log top 3 scores
+        $logger->log("SCORE SUCCESS: Scored " . count($scored_images) . " images", 'debug');
+        if (count($scored_images) > 0) {
+            $logger->log("Top score: " . $scored_images[0]['score'] . " (matches: " . $scored_images[0]['match_count'] . ")", 'debug');
         }
         
         return $scored_images;

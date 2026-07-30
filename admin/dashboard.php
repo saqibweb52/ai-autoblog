@@ -353,36 +353,26 @@ class AIA_Admin_Dashboard {
     }
     
     private function process_single_keyword($index, $keyword_data) {
+        $logger = new AIA_Logger();
+        
         // Check if required classes exist
         if (!class_exists('AIA_Content_Generator')) {
-            if (class_exists('AIA_Logger')) {
-                $logger = new AIA_Logger();
-                $logger->log('AIA_Content_Generator class not found', 'error');
-            }
+            $logger->log('AIA_Content_Generator class not found', 'error');
             return false;
         }
         
         if (!class_exists('AIA_Publisher')) {
-            if (class_exists('AIA_Logger')) {
-                $logger = new AIA_Logger();
-                $logger->log('AIA_Publisher class not found', 'error');
-            }
+            $logger->log('AIA_Publisher class not found', 'error');
             return false;
         }
         
         if (!class_exists('AIA_Link_Manager')) {
-            if (class_exists('AIA_Logger')) {
-                $logger = new AIA_Logger();
-                $logger->log('AIA_Link_Manager class not found', 'error');
-            }
+            $logger->log('AIA_Link_Manager class not found', 'error');
             return false;
         }
         
         if (!class_exists('AIA_Image_Manager')) {
-            if (class_exists('AIA_Logger')) {
-                $logger = new AIA_Logger();
-                $logger->log('AIA_Image_Manager class not found', 'error');
-            }
+            $logger->log('AIA_Image_Manager class not found', 'error');
             return false;
         }
         
@@ -395,11 +385,13 @@ class AIA_Admin_Dashboard {
         try {
             // Mark as processing
             $keywords_manager->update_keyword_status($index, 'processing');
+            $logger->log("Processing keyword: '" . $keyword_data['keyword'] . "' (Author ID: {$keyword_data['author_id']})", 'info');
             
             // Generate post
             $generated = $generator->generate_post(
                 $keyword_data['keyword'],
-                isset($keyword_data['author_id']) ? $keyword_data['author_id'] : 1
+                isset($keyword_data['author_id']) ? $keyword_data['author_id'] : 1,
+                isset($keyword_data['categories']) ? $keyword_data['categories'] : array()
             );
             
             if (!$generated || !is_array($generated)) {
@@ -411,30 +403,43 @@ class AIA_Admin_Dashboard {
                 throw new Exception('Generated content is missing');
             }
             
+            $logger->log("Content generated successfully. Length: " . strlen($generated['content']), 'debug');
+            
             // Add links
             $generated['content'] = $link_manager->add_links(
                 $generated['content'],
                 $keyword_data['keyword']
             );
             
-            // Add image
-            $image_html = $image_manager->get_image_for_post(
-                $keyword_data['keyword'],
-                $generated['content']
-            );
+            // Add image - FIXED: Pass as array with keyword
+            $image_data = $image_manager->get_image_for_post(array(
+                'keyword' => $keyword_data['keyword'],
+                'title' => $generated['title'] ?? $keyword_data['keyword']
+            ));
             
-            if ($image_html) {
+            if ($image_data && isset($image_data['url'])) {
+                $image_html = '<figure><img src="' . esc_url($image_data['url']) . '" alt="' . esc_attr($keyword_data['keyword']) . '" /></figure>';
                 $generated['content'] = $image_html . "\n\n" . $generated['content'];
+                $generated['featured_image'] = $image_data['url'];
+                $logger->log("Image added to content: " . substr($image_data['url'], 0, 80) . '...', 'info');
+            } else {
+                $logger->log("No image found for keyword: '" . $keyword_data['keyword'] . "'", 'warning');
             }
             
             $generated['keyword'] = $keyword_data['keyword'];
             $generated['author_id'] = isset($keyword_data['author_id']) ? $keyword_data['author_id'] : 1;
+            
+            // Add categories if present
+            if (!empty($keyword_data['categories'])) {
+                $generated['categories'] = $keyword_data['categories'];
+            }
             
             // Publish
             $post_id = $publisher->publish_post($generated);
             
             if ($post_id) {
                 $keywords_manager->update_keyword_status($index, 'done');
+                $logger->log("Post published successfully. Post ID: {$post_id}", 'success');
                 return true;
             } else {
                 throw new Exception('Failed to publish post');
@@ -442,10 +447,7 @@ class AIA_Admin_Dashboard {
             
         } catch (Exception $e) {
             $keywords_manager->update_keyword_status($index, 'pending');
-            if (class_exists('AIA_Logger')) {
-                $logger = new AIA_Logger();
-                $logger->log("Manual generation error for '{$keyword_data['keyword']}': {$e->getMessage()}", 'error');
-            }
+            $logger->log("Manual generation error for '{$keyword_data['keyword']}': {$e->getMessage()}", 'error');
             return false;
         }
     }

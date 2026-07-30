@@ -113,9 +113,9 @@ class AIA_Keywords_Page {
                                 <select name="author_id" id="author_id" required>
                                     <option value="">Select Author</option>
                                     <?php foreach ($authors as $author): ?>
-                                        <option value="<?php echo $author['author_id']; ?>">
+                                        <option value="<?php echo esc_attr($author['author_id']); ?>">
                                             <?php echo esc_html($author['name']); ?> 
-                                            (ID: <?php echo $author['author_id']; ?>)
+                                            (ID: <?php echo esc_html($author['author_id']); ?>)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -217,7 +217,7 @@ class AIA_Keywords_Page {
                                         <td><strong><?php echo esc_html($keyword['keyword']); ?></strong></td>
                                         <td>
                                             <?php echo esc_html($author_name); ?>
-                                            <span class="aia-user-id">(ID: <?php echo $keyword['author_id']; ?>)</span>
+                                            <span class="aia-user-id">(ID: <?php echo esc_html($keyword['author_id']); ?>)</span>
                                         </td>
                                         <td>
                                             <?php if (!empty($category_names)): ?>
@@ -231,11 +231,11 @@ class AIA_Keywords_Page {
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <span class="aia-status aia-status-<?php echo $keyword['status']; ?>">
-                                                <?php echo ucfirst($keyword['status']); ?>
+                                            <span class="aia-status aia-status-<?php echo esc_attr($keyword['status']); ?>">
+                                                <?php echo ucfirst(esc_html($keyword['status'])); ?>
                                             </span>
                                         </td>
-                                        <td><?php echo $keyword['created_at']; ?></td>
+                                        <td><?php echo esc_html($keyword['created_at']); ?></td>
                                         <td>
                                             <form method="post" style="display:inline;">
                                                 <input type="hidden" name="delete_index" value="<?php echo $index; ?>">

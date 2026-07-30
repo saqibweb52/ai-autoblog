@@ -1,0 +1,179 @@
+[2026-07-29 10:31:30] [DEBUG] Searching Unsplash with query: 'wordpress seo' (per_page: 30)
+[2026-07-29 10:31:31] [INFO] UNSPLASH SUCCESS: Found 28 images
+[2026-07-29 10:45:31] [INFO] AI image search for post: 'Beyond Blue Links: Is the AI Search Engine the Future of Finding?' using keyword: 'ai search engine'
+[2026-07-29 10:45:31] [DEBUG] Searching Unsplash with query: 'ai search engine' (per_page: 30)
+[2026-07-29 10:45:32] [INFO] UNSPLASH SUCCESS: Found 3 images
+[2026-07-29 10:45:32] [DEBUG] Found 3 images for keyword 'ai search engine'
+[2026-07-29 10:45:32] [DEBUG] SCORE SUCCESS: Scored 3 images
+[2026-07-29 10:45:32] [DEBUG] Top score: 33 (matches: 0)
+[2026-07-29 10:49:37] [INFO] Processing keyword: 'wordpress seo' (Author ID: 2)
+[2026-07-29 10:50:05] [DEBUG] Parsing JSON response. Length: 8165
+[2026-07-29 10:50:05] [DEBUG] JSON parsed successfully via direct decode
+[2026-07-29 10:50:05] [DEBUG] Parsed content: seo_title=Why Your WordPress SEO Strategy Isn't Working (And How to Fix It), content_length=7678
+[2026-07-29 10:50:05] [DEBUG] Extracted content: title=Why Your WordPress SEO Strategy Isn't Working (And How to Fix It), content_length=7678
+[2026-07-29 10:50:05] [DEBUG] Featured image: https://picsum.photos/id/26/800/400
+[2026-07-29 10:50:05] [DEBUG] Content generated successfully. Length: 7678
+[2026-07-29 10:50:05] [DEBUG] get_image_for_post received post_data: ["keyword","title"]
+[2026-07-29 10:50:05] [INFO] Using blog keyword for image search: 'wordpress seo'
+[2026-07-29 10:50:05] [DEBUG] Searching Unsplash with query: 'wordpress seo' (per_page: 30)
+[2026-07-29 10:50:06] [INFO] UNSPLASH SUCCESS: Found 28 images
+[2026-07-29 10:50:06] [DEBUG] Found 28 images for keyword: 'wordpress seo'
+[2026-07-29 10:50:06] [DEBUG] SCORE SUCCESS: Scored 28 images
+[2026-07-29 10:50:06] [DEBUG] Top score: 43 (matches: 1)
+[2026-07-29 10:50:06] [INFO] SUCCESS: Selected image with score: 43 for post
+[2026-07-29 10:50:06] [DEBUG] Image URL: https://images.unsplash.com/photo-1566207474742-de921626ad0c?ixid=M3wxMDAzNDkxfDB8MXxzZWFyY2h8Mnx8d2...
+[2026-07-29 10:50:07] [INFO] Image added to content: https://images.unsplash.com/photo-1566207474742-de921626ad0c?ixid=M3wxMDAzNDkxfD...
+[2026-07-29 10:50:07] [DEBUG] Publishing post with title: Why Your WordPress SEO Strategy Isn't Working (And How to Fix It)
+[2026-07-29 10:50:07] [DEBUG] Content length: 8781
+[2026-07-29 10:50:07] [DEBUG] get_image_for_post received post_data: ["title","meta_description","content","featured_image","excerpt","categories","keyword","author_id"]
+[2026-07-29 10:50:07] [INFO] Using blog keyword for image search: 'wordpress seo'
+[2026-07-29 10:50:07] [DEBUG] Searching Unsplash with query: 'wordpress seo' (per_page: 30)
+[2026-07-29 10:50:08] [INFO] UNSPLASH SUCCESS: Found 28 images
+[2026-07-29 10:50:08] [DEBUG] Found 28 images for keyword: 'wordpress seo'
+[2026-07-29 10:50:08] [DEBUG] SCORE SUCCESS: Scored 28 images
+[2026-07-29 10:50:08] [DEBUG] Top score: 43 (matches: 1)
+[2026-07-29 10:50:08] [INFO] SUCCESS: Selected image with score: 43 for post
+[2026-07-29 10:50:08] [DEBUG] Image URL: https://images.unsplash.com/photo-1566207474742-de921626ad0c?ixid=M3wxMDAzNDkxfDB8MXxzZWFyY2h8Mnx8d2...
+[2026-07-29 10:50:13] [SUCCESS] Featured image set successfully for post ID: 3457
+[2026-07-29 10:50:13] [SUCCESS] Featured image set successfully for post ID: 3457
+[2026-07-29 10:50:13] [SUCCESS] Post published successfully. ID: 3457, Title: Why Your WordPress SEO Strategy Isn't Working (And How to Fix It)
+[2026-07-29 10:50:13] [ERROR] IndexNow: Post 3457 submission failed. Errors: 
+[2026-07-29 10:50:13] [SUCCESS] Post published successfully. Post ID: 3457
+[2026-07-29 10:50:56] [INFO] AI image search for post: 'Why Your WordPress SEO Strategy Isn't Working (And How to Fix It)' using keyword: 'wordpress seo'
+[2026-07-29 10:50:56] [DEBUG] Searching Unsplash with query: 'wordpress seo' (per_page: 30)
+[2026-07-29 10:50:56] [INFO] UNSPLASH SUCCESS: Found 28 images
+[2026-07-29 10:50:56] [DEBUG] Found 28 images for keyword 'wordpress seo'
+[2026-07-29 10:50:56] [DEBUG] SCORE SUCCESS: Scored 28 images
+[2026-07-29 10:50:56] [DEBUG] Top score: 43 (matches: 1)
+[2026-07-29 10:51:03] [INFO] AI image search for post: 'Why Your WordPress SEO Strategy Isn't Working (And How to Fix It)' using keyword: 'wordpress seo'
+[2026-07-29 10:51:03] [DEBUG] Searching Unsplash with query: 'wordpress seo' (per_page: 30)
+[2026-07-29 10:51:04] [INFO] UNSPLASH SUCCESS: Found 28 images
+[2026-07-29 10:51:04] [DEBUG] Found 28 images for keyword 'wordpress seo'
+[2026-07-29 10:51:04] [DEBUG] SCORE SUCCESS: Scored 28 images
+[2026-07-29 10:51:04] [DEBUG] Top score: 43 (matches: 1)
+[2026-07-29 10:51:22] [DEBUG] Searching Unsplash with query: 'wordpress seo' (per_page: 30)
+[2026-07-29 10:51:23] [INFO] UNSPLASH SUCCESS: Found 28 images
+[2026-07-29 10:57:17] [INFO] Processing keyword: 'wordpress' (Author ID: 1)
+[2026-07-29 10:58:05] [DEBUG] Parsing JSON response. Length: 7510
+[2026-07-29 10:58:05] [DEBUG] JSON parsed successfully via direct decode
+[2026-07-29 10:58:05] [DEBUG] Parsed content: seo_title=Is WordPress Still Worth It? An Honest Developer Take, content_length=7056
+[2026-07-29 10:58:05] [DEBUG] Extracted content: title=Is WordPress Still Worth It? An Honest Developer Take, content_length=7056
+[2026-07-29 10:58:05] [DEBUG] Featured image: https://picsum.photos/id/48/800/400
+[2026-07-29 10:58:05] [DEBUG] Categories: 33
+[2026-07-29 10:58:05] [DEBUG] Content generated successfully. Length: 7056
+[2026-07-29 10:58:05] [DEBUG] get_image_for_post received post_data: ["keyword","title"]
+[2026-07-29 10:58:05] [INFO] Using blog keyword for image search: 'wordpress'
+[2026-07-29 10:58:05] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-29 10:58:07] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 10:58:07] [DEBUG] Found 30 images for keyword: 'wordpress'
+[2026-07-29 10:58:07] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 10:58:07] [DEBUG] Top score: 52 (matches: 1)
+[2026-07-29 10:58:07] [INFO] SUCCESS: Selected image with score: 52 for post
+[2026-07-29 10:58:07] [DEBUG] Image URL: https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixid=M3wxMDAzNDkxfDB8MXxzZWFyY2h8NHx8d2...
+[2026-07-29 10:58:07] [INFO] Image added to content: https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixid=M3wxMDAzNDkxfD...
+[2026-07-29 10:58:07] [DEBUG] Publishing post with title: Is WordPress Still Worth It? An Honest Developer Take
+[2026-07-29 10:58:07] [DEBUG] Content length: 7822
+[2026-07-29 10:58:07] [DEBUG] Assigning categories to post: 33
+[2026-07-29 10:58:08] [DEBUG] get_image_for_post received post_data: ["title","meta_description","content","featured_image","excerpt","categories","keyword","author_id"]
+[2026-07-29 10:58:08] [INFO] Using blog keyword for image search: 'wordpress'
+[2026-07-29 10:58:08] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-29 10:58:08] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 10:58:08] [DEBUG] Found 30 images for keyword: 'wordpress'
+[2026-07-29 10:58:08] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 10:58:08] [DEBUG] Top score: 52 (matches: 1)
+[2026-07-29 10:58:08] [INFO] SUCCESS: Selected image with score: 52 for post
+[2026-07-29 10:58:08] [DEBUG] Image URL: https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixid=M3wxMDAzNDkxfDB8MXxzZWFyY2h8NHx8d2...
+[2026-07-29 10:58:14] [SUCCESS] Featured image set successfully for post ID: 3459
+[2026-07-29 10:58:14] [SUCCESS] Featured image set successfully for post ID: 3459
+[2026-07-29 10:58:14] [SUCCESS] Post published successfully. ID: 3459, Title: Is WordPress Still Worth It? An Honest Developer Take
+[2026-07-29 10:58:14] [ERROR] IndexNow: Post 3459 submission failed. Errors: 
+[2026-07-29 10:58:14] [SUCCESS] Post published successfully. Post ID: 3459
+[2026-07-29 10:58:55] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-29 10:58:55] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 10:59:04] [INFO] AI image search for post: 'Is WordPress Still Worth It? An Honest Developer Take' using keyword: 'wordpress'
+[2026-07-29 10:59:04] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-29 10:59:05] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 10:59:05] [DEBUG] Found 30 images for keyword 'wordpress'
+[2026-07-29 10:59:05] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 10:59:05] [DEBUG] Top score: 52 (matches: 1)
+[2026-07-29 11:00:54] [SUCCESS] Featured image set successfully for post ID: 3459
+[2026-07-29 11:08:05] [INFO] Daily sitemap sync completed. 7 links discovered.
+[2026-07-29 11:08:56] [SUCCESS] Featured image set successfully for post ID: 3459
+[2026-07-29 11:14:40] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-29 11:14:41] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 11:14:41] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 11:14:41] [DEBUG] Top score: 52 (matches: 1)
+[2026-07-29 11:15:04] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-29 11:15:06] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 11:15:06] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 11:15:06] [DEBUG] Top score: 52 (matches: 1)
+[2026-07-29 11:26:40] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-29 11:26:41] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 11:26:41] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 11:26:41] [DEBUG] Top score: 52 (matches: 1)
+[2026-07-29 11:59:23] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-29 11:59:25] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 11:59:25] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 11:59:25] [DEBUG] Top score: 52 (matches: 1)
+[2026-07-29 12:01:48] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-29 12:01:49] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 12:01:49] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 12:01:49] [DEBUG] Top score: 52 (matches: 1)
+[2026-07-29 12:03:49] [SUCCESS] Featured image set successfully for post ID: 3459 with alt text: 'wordpress'
+[2026-07-29 12:06:12] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-29 12:06:13] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 12:06:13] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 12:06:13] [DEBUG] Top score: 52 (matches: 1)
+[2026-07-29 12:10:38] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-29 12:10:39] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 12:10:39] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 12:10:39] [DEBUG] Top score: 52 (matches: 1)
+[2026-07-29 12:12:55] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-29 12:12:55] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 12:12:55] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 12:12:55] [DEBUG] Top score: 52 (matches: 1)
+[2026-07-29 12:18:36] [DEBUG] Searching Unsplash with query: 'wordpress seo' (per_page: 30)
+[2026-07-29 12:18:37] [INFO] UNSPLASH SUCCESS: Found 28 images
+[2026-07-29 12:18:37] [DEBUG] SCORE SUCCESS: Scored 28 images
+[2026-07-29 12:18:37] [DEBUG] Top score: 43 (matches: 1)
+[2026-07-29 12:18:56] [DEBUG] Searching Unsplash with query: 'Ai Using Tips' (per_page: 30)
+[2026-07-29 12:18:57] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 12:18:57] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 12:18:57] [DEBUG] Top score: 33 (matches: 0)
+[2026-07-29 12:19:10] [DEBUG] Searching Unsplash with query: 'sadf' (per_page: 30)
+[2026-07-29 12:19:12] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 12:19:12] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 12:19:12] [DEBUG] Top score: 38 (matches: 0)
+[2026-07-29 12:19:21] [DEBUG] Searching Unsplash with query: 'Bloging issues' (per_page: 30)
+[2026-07-29 12:19:23] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 12:19:23] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 12:19:23] [DEBUG] Top score: 33 (matches: 0)
+[2026-07-29 12:19:31] [DEBUG] Searching Unsplash with query: 'dsafdsafsd' (per_page: 30)
+[2026-07-29 12:19:32] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 12:19:32] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 12:19:32] [DEBUG] Top score: 33 (matches: 0)
+[2026-07-29 12:19:44] [DEBUG] Searching Unsplash with query: 'sdfsad' (per_page: 30)
+[2026-07-29 12:19:44] [ERROR] UNSPLASH FAILED: No results found for keyword: 'sdfsad'
+[2026-07-29 12:20:10] [DEBUG] Searching Unsplash with query: 'new' (per_page: 30)
+[2026-07-29 12:20:11] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 12:20:11] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 12:20:11] [DEBUG] Top score: 53 (matches: 1)
+[2026-07-29 12:22:12] [DEBUG] Searching Unsplash with query: 'wordpress seo' (per_page: 30)
+[2026-07-29 12:22:12] [INFO] UNSPLASH SUCCESS: Found 28 images
+[2026-07-29 12:22:12] [DEBUG] SCORE SUCCESS: Scored 28 images
+[2026-07-29 12:22:12] [DEBUG] Top score: 43 (matches: 1)
+[2026-07-29 12:23:08] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-29 12:23:09] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 12:23:09] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 12:23:09] [DEBUG] Top score: 52 (matches: 1)
+[2026-07-29 12:23:32] [DEBUG] Searching Unsplash with query: 'wordpress seo' (per_page: 30)
+[2026-07-29 12:23:33] [INFO] UNSPLASH SUCCESS: Found 28 images
+[2026-07-29 12:23:33] [DEBUG] SCORE SUCCESS: Scored 28 images
+[2026-07-29 12:23:33] [DEBUG] Top score: 43 (matches: 1)
+[2026-07-29 12:24:10] [DEBUG] Searching Unsplash with query: 'laravel tips' (per_page: 30)
+[2026-07-29 12:24:11] [ERROR] UNSPLASH FAILED: No results found for keyword: 'laravel tips'
+[2026-07-29 12:24:18] [DEBUG] Searching Unsplash with query: 'smart chatbot' (per_page: 30)
+[2026-07-29 12:24:19] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-29 12:24:19] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-29 12:24:19] [DEBUG] Top score: 35 (matches: 2)
+[2026-07-29 12:24:53] [SUCCESS] Featured image set successfully for post ID: 3451 with alt text: 'smart chatbot'

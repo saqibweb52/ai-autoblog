@@ -98,7 +98,7 @@ class AIA_AI_Settings {
                     </table>
                 </div>
                 
-                <!-- ============ GEMINI SETTINGS ============ -->
+<!-- ============ GEMINI SETTINGS ============ -->
                 <div class="aia-settings-section provider-section gemini-section" <?php echo $ai_provider !== 'gemini' ? 'style="display:none;"' : ''; ?>>
                     <h2>🔵 Google Gemini Settings</h2>
                     <table class="form-table">
@@ -130,12 +130,13 @@ class AIA_AI_Settings {
                             </th>
                             <td>
                                 <select name="aia_gemini_model" id="aia_gemini_model">
+                                    <option value="gemini-3.6-flash" <?php selected($gemini_model, 'gemini-3.6-flash'); ?>>Gemini 3.6 Flash</option>
+                                    <option value="gemini-3.5-flash" <?php selected($gemini_model, 'gemini-3.5-flash'); ?>>Gemini 3.5 Flash</option>
+                                    <option value="gemini-3.5-flash-lite" <?php selected($gemini_model, 'gemini-3.5-flash-lite'); ?>>Gemini 3.5 Flash-Lite</option>
+                                    <option value="gemini-3.1-pro" <?php selected($gemini_model, 'gemini-3.1-pro'); ?>>Gemini 3.1 Pro</option>
                                     <option value="gemini-2.5-flash" <?php selected($gemini_model, 'gemini-2.5-flash'); ?>>Gemini 2.5 Flash</option>
-                                    <option value="gemini-2.0-flash" <?php selected($gemini_model, 'gemini-2.0-flash'); ?>>Gemini 2.0 Flash</option>
-                                    <option value="gemini-2.0-flash-exp" <?php selected($gemini_model, 'gemini-2.0-flash-exp'); ?>>Gemini 2.0 Flash (Experimental)</option>
-                                    <option value="gemini-1.5-pro" <?php selected($gemini_model, 'gemini-1.5-pro'); ?>>Gemini 1.5 Pro</option>
-                                    <option value="gemini-1.5-flash" <?php selected($gemini_model, 'gemini-1.5-flash'); ?>>Gemini 1.5 Flash</option>
-                                    <option value="gemini-1.0-pro" <?php selected($gemini_model, 'gemini-1.0-pro'); ?>>Gemini 1.0 Pro</option>
+                                    <option value="gemini-2.5-pro" <?php selected($gemini_model, 'gemini-2.5-pro'); ?>>Gemini 2.5 Pro</option>
+                                    <option value="gemini-2.5-flash-lite" <?php selected($gemini_model, 'gemini-2.5-flash-lite'); ?>>Gemini 2.5 Flash-Lite</option>
                                 </select>
                                 <p class="description">Select Gemini model variant</p>
                             </td>
@@ -159,10 +160,10 @@ class AIA_AI_Settings {
                                        id="aia_enable_grounding" 
                                        value="1"
                                        <?php checked($grounding, 1); ?>>
-                                <p class="description">Enable Google Search grounding for Gemini (requires Gemini 2.0 or higher)</p>
+                                <p class="description">Enable Google Search grounding for Gemini</p>
                                 <?php if ($ai_provider === 'gemini'): ?>
                                     <p class="description" style="color: #856404; background: #fff3cd; padding: 8px 12px; border-radius: 4px; margin-top: 5px;">
-                                        Note: Grounding is only available for Gemini 2.0 Flash and Gemini 2.5 Flash models.
+                                        Note: Grounding is available for the Gemini 2.5 and 3.x Flash models.
                                     </p>
                                 <?php endif; ?>
                             </td>

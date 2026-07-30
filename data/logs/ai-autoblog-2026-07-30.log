@@ -1,0 +1,16 @@
+[2026-07-30 08:17:16] [DEBUG] Searching Unsplash with query: 'wordpress' (per_page: 30)
+[2026-07-30 08:17:17] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-07-30 08:17:17] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-07-30 08:17:17] [DEBUG] Top score: 52 (matches: 1)
+[2026-07-30 08:17:45] [DEBUG] Searching Unsplash with query: 'wordpress seo' (per_page: 30)
+[2026-07-30 08:17:46] [INFO] UNSPLASH SUCCESS: Found 28 images
+[2026-07-30 08:17:46] [DEBUG] SCORE SUCCESS: Scored 28 images
+[2026-07-30 08:17:46] [DEBUG] Top score: 43 (matches: 1)
+[2026-07-30 08:17:52] [DEBUG] Searching Unsplash with query: 'wordpress seo' (per_page: 30)
+[2026-07-30 08:17:53] [INFO] UNSPLASH SUCCESS: Found 28 images
+[2026-07-30 08:17:53] [DEBUG] SCORE SUCCESS: Scored 28 images
+[2026-07-30 08:17:53] [DEBUG] Top score: 43 (matches: 1)
+[2026-07-30 08:18:04] [DEBUG] Searching Unsplash with query: 'wordpress seo' (per_page: 30)
+[2026-07-30 08:18:05] [INFO] UNSPLASH SUCCESS: Found 28 images
+[2026-07-30 08:18:05] [DEBUG] SCORE SUCCESS: Scored 28 images
+[2026-07-30 08:18:05] [DEBUG] Top score: 43 (matches: 1)

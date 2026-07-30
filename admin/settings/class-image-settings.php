@@ -13,8 +13,7 @@ class AIA_Image_Settings {
         add_action('admin_menu', array($this, 'add_submenu_page'));
         add_action('admin_init', array($this, 'register_settings'));
         add_action('wp_ajax_aia_test_unsplash', array($this, 'test_unsplash_connection'));
-        add_action('wp_ajax_aia_search_unsplash_images', array($this, 'search_unsplash_images'));
-        add_action('wp_ajax_aia_ai_search_images', array($this, 'ai_search_images'));
+        add_action('wp_ajax_aia_search_images', array($this, 'search_images'));
         add_action('wp_ajax_aia_set_featured_image', array($this, 'set_featured_image_ajax'));
         add_action('wp_ajax_aia_get_featured_image', array($this, 'get_featured_image'));
         
@@ -165,91 +164,78 @@ class AIA_Image_Settings {
                 </form>
             </div>
             
-            <!-- AI-Powered Image Search & Management -->
+            <!-- Unified Image Search & Management -->
             <div class="aia-settings-section">
-                <h2>🤖 AI-Powered Image Search</h2>
-                <p class="description">AI analyzes your post content, generates the perfect search keyword, and finds the most relevant images from Unsplash.</p>
+                <h2>🔍 Image Search & Management</h2>
+                <p class="description">Search for images manually or select a post to auto-search using its keyword.</p>
                 
                 <div class="aia-image-search">
+                    <!-- Line 1: Image search field + search button -->
                     <table class="form-table">
                         <tr>
                             <th scope="row">
-                                <label>Select Post for AI Search</label>
+                                <label for="aia_search_keyword">Search Images</label>
                             </th>
                             <td>
-                                <select id="aia_select_post_ai" style="width: 400px;">
-                                    <option value="">— Select a post to find images —</option>
-                                    <?php foreach ($posts as $post): ?>
-                                        <option value="<?php echo esc_attr($post->ID); ?>">
-                                            <?php echo esc_html($post->post_title . ' (ID: ' . $post->ID . ')'); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <button type="button" id="aia_ai_search" class="button button-primary" style="margin-left: 10px;">
-                                    🔍 AI Find Images
-                                </button>
-                                <span id="aia_ai_search_status" style="margin-left: 10px;"></span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">
-                                <label>AI Generated Search Keyword</label>
-                            </th>
-                            <td>
-                                <span id="aia_ai_search_term" style="font-weight: 500; color: #2271b1; font-size: 14px;">—</span>
+                                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                    <input type="text" 
+                                           id="aia_search_keyword" 
+                                           class="regular-text" 
+                                           placeholder="Enter any keyword to search images..."
+                                           style="width: 350px;">
+                                    <button type="button" id="aia_search_images" class="button button-primary">
+                                        🔍 Search
+                                    </button>
+                                    <span id="aia_search_status" style="margin-left: 5px; font-size: 13px;"></span>
+                                </div>
+                                <p class="description">Enter a keyword to manually search for images.</p>
                             </td>
                         </tr>
                     </table>
-                </div>
-                
-                <div id="aia_ai_results" style="display: none; margin-top: 20px;">
-                    <h3>Top 5 Most Relevant Images</h3>
-                    <div id="aia_ai_image_grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; margin-top: 15px;">
-                        <!-- Images will be loaded here -->
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Manual Image Search -->
-            <div class="aia-settings-section">
-                <h2>🔍 Manual Image Search</h2>
-                <p class="description">Search for images manually and apply them as featured images to your posts.</p>
-                
-                <div class="aia-image-search">
+                    
+                    <!-- Line 2: Post select dropdown with auto-image search + current featured image -->
                     <table class="form-table">
-                        <tr>
-                            <th scope="row">
-                                <label for="aia_search_keyword">Search Keyword</label>
-                            </th>
-                            <td>
-                                <input type="text" 
-                                       id="aia_search_keyword" 
-                                       class="regular-text" 
-                                       placeholder="Enter keyword to search images (e.g., technology, nature, business)"
-                                       style="width: 400px;">
-                                <button type="button" id="aia_search_images" class="button button-primary">
-                                    Search Images
-                                </button>
-                                <span id="aia_search_status" style="margin-left: 10px;"></span>
-                            </td>
-                        </tr>
                         <tr>
                             <th scope="row">
                                 <label>Select Post</label>
                             </th>
                             <td>
-                                <select id="aia_select_post" style="width: 400px;">
-                                    <option value="">— Select a post to apply image —</option>
-                                    <?php foreach ($posts as $post): ?>
-                                        <option value="<?php echo esc_attr($post->ID); ?>">
-                                            <?php echo esc_html($post->post_title . ' (ID: ' . $post->ID . ')'); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <button type="button" id="aia_get_featured" class="button button-secondary" style="margin-left: 10px;">
-                                    Get Current
-                                </button>
-                                <span id="aia_current_featured" style="margin-left: 10px; font-size: 12px; color: #666;"></span>
+                                <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                                    <select id="aia_select_post" style="width: 350px;">
+                                        <option value="">— Select a post —</option>
+                                        <?php foreach ($posts as $post): 
+                                            $post_keyword = get_post_meta($post->ID, '_aia_keyword', true);
+                                            $keyword_display = !empty($post_keyword) ? ' (Keyword: ' . esc_html($post_keyword) . ')' : '';
+                                        ?>
+                                            <option value="<?php echo esc_attr($post->ID); ?>" data-keyword="<?php echo esc_attr($post_keyword); ?>" data-title="<?php echo esc_attr($post->post_title); ?>">
+                                                <?php echo esc_html($post->post_title . $keyword_display); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    
+                                    <!-- Current Featured Image -->
+                                    <div id="aia_current_featured_container" style="display: flex; align-items: center; gap: 10px;">
+                                        <span style="font-size: 12px; color: #666;">Current:</span>
+                                        <a id="aia_current_featured_link" href="#" target="_blank" style="display: none; border-radius: 4px; border: 2px solid #ddd; overflow: hidden; width: 60px; height: 45px; flex-shrink: 0;">
+                                            <img id="aia_current_featured_img" src="" alt="Current featured" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                                        </a>
+                                        <span id="aia_no_featured" style="font-size: 12px; color: #999; font-style: italic;">No image</span>
+                                        <span id="aia_current_featured_status" style="font-size: 12px; color: #666;"></span>
+                                    </div>
+                                </div>
+                                <p class="description">Select a post to automatically search for images using its keyword.</p>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <!-- Line 3: Searched keyword display -->
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label>Search Keyword</label>
+                            </th>
+                            <td>
+                                <span id="aia_search_keyword_display" style="font-weight: 500; color: #2271b1; font-size: 14px;">—</span>
                             </td>
                         </tr>
                     </table>
@@ -257,7 +243,11 @@ class AIA_Image_Settings {
                 
                 <div id="aia_image_results" style="display: none; margin-top: 20px;">
                     <h3>Search Results</h3>
-                    <div id="aia_image_grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+                        <span id="aia_result_count" style="color: #666;"></span>
+                        <span id="aia_search_term_display" style="font-weight: 500; color: #2271b1;"></span>
+                    </div>
+                    <div id="aia_image_grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 10px;">
                         <!-- Images will be loaded here -->
                     </div>
                     <div id="aia_load_more_container" style="text-align: center; margin-top: 20px; display: none;">
@@ -331,41 +321,6 @@ class AIA_Image_Settings {
                 border-top: 1px solid #f0f0f1;
                 text-align: right;
             }
-            .aia-image-card .aia-image-actions .button {
-                font-size: 11px;
-                padding: 2px 8px;
-                min-height: 24px;
-            }
-            .aia-image-card .aia-select-badge {
-                position: absolute;
-                top: 8px;
-                right: 8px;
-                background: #2271b1;
-                color: #fff;
-                padding: 2px 10px;
-                border-radius: 12px;
-                font-size: 11px;
-                font-weight: 500;
-                display: none;
-            }
-            .aia-image-card.selected .aia-select-badge {
-                display: block;
-            }
-            .aia-image-card .aia-image-overlay {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(34, 113, 177, 0.15);
-                display: none;
-                border-radius: 8px;
-                pointer-events: none;
-            }
-            .aia-image-card.selected .aia-image-overlay {
-                display: block;
-            }
-            
             .aia-image-card .aia-rank-badge {
                 position: absolute;
                 top: 8px;
@@ -377,27 +332,6 @@ class AIA_Image_Settings {
                 font-size: 11px;
                 font-weight: 700;
             }
-            
-            #aia_search_status.loading {
-                color: #f0ad4e;
-            }
-            #aia_search_status.success {
-                color: #28a745;
-            }
-            #aia_search_status.error {
-                color: #dc3545;
-            }
-            
-            #aia_ai_search_status.loading {
-                color: #f0ad4e;
-            }
-            #aia_ai_search_status.success {
-                color: #28a745;
-            }
-            #aia_ai_search_status.error {
-                color: #dc3545;
-            }
-            
             .aia-image-card .aia-apply-btn {
                 background: #2271b1;
                 color: #fff;
@@ -414,6 +348,14 @@ class AIA_Image_Settings {
                 opacity: 0.6;
                 cursor: not-allowed;
             }
+            
+            #aia_search_status.loading { color: #f0ad4e; }
+            #aia_search_status.success { color: #28a745; }
+            #aia_search_status.error { color: #dc3545; }
+            
+            #aia_current_featured_container img {
+                transition: opacity 0.2s;
+            }
         </style>
         
         <script>
@@ -422,6 +364,7 @@ class AIA_Image_Settings {
             var currentPage = 1;
             var currentQuery = '';
             var totalPages = 0;
+            var currentPostId = 0;
             
             // ============== TEST CONNECTION ==============
             $('#aia_test_unsplash').on('click', function() {
@@ -462,17 +405,7 @@ class AIA_Image_Settings {
             });
             
             // ============== GET CURRENT FEATURED IMAGE ==============
-            $('#aia_get_featured').on('click', function() {
-                var postId = $('#aia_select_post').val();
-                var resultSpan = $('#aia_current_featured');
-                
-                if (!postId) {
-                    resultSpan.html('Please select a post first.');
-                    return;
-                }
-                
-                resultSpan.html('Loading...');
-                
+            function getCurrentFeatured(postId) {
                 $.ajax({
                     url: ajaxurl,
                     type: 'POST',
@@ -483,150 +416,25 @@ class AIA_Image_Settings {
                     },
                     success: function(response) {
                         if (response.success && response.data.url) {
-                            resultSpan.html('Current featured: <a href="' + response.data.url + '" target="_blank">View Image</a>');
+                            $('#aia_current_featured_img').attr('src', response.data.url);
+                            $('#aia_current_featured_link').attr('href', response.data.url).show();
+                            $('#aia_no_featured').hide();
+                            $('#aia_current_featured_status').text('');
                         } else {
-                            resultSpan.html('No featured image set for this post.');
+                            $('#aia_current_featured_link').hide();
+                            $('#aia_no_featured').show();
+                            $('#aia_current_featured_status').text('');
                         }
                     },
                     error: function() {
-                        resultSpan.html('Failed to get featured image.');
+                        $('#aia_current_featured_link').hide();
+                        $('#aia_no_featured').show();
+                        $('#aia_current_featured_status').text('Error loading image');
                     }
-                });
-            });
-            
-            // ============== AI-POWERED IMAGE SEARCH ==============
-            $('#aia_ai_search').on('click', function() {
-                var postId = $('#aia_select_post_ai').val();
-                var statusSpan = $('#aia_ai_search_status');
-                var grid = $('#aia_ai_image_grid');
-                var resultsDiv = $('#aia_ai_results');
-                
-                if (!postId) {
-                    statusSpan.removeClass().addClass('error').text('Please select a post first.');
-                    return;
-                }
-                
-                statusSpan.removeClass().addClass('loading').text('AI analyzing post and searching images...');
-                resultsDiv.hide();
-                grid.html('');
-                $('#aia_ai_search_term').text('—');
-                
-                $.ajax({
-                    url: ajaxurl,
-                    type: 'POST',
-                    data: {
-                        action: 'aia_ai_search_images',
-                        post_id: postId,
-                        nonce: testNonce
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            statusSpan.removeClass().addClass('success').html('✅ ' + response.data.message);
-                            $('#aia_ai_search_term').html('<strong>' + response.data.search_term + '</strong>');
-                            
-                            if (response.data.images && response.data.images.length > 0) {
-                                renderAiImages(response.data.images);
-                                resultsDiv.show();
-                            } else {
-                                statusSpan.removeClass().addClass('error').html('No relevant images found. Try a different post.');
-                            }
-                        } else {
-                            statusSpan.removeClass().addClass('error').html('❌ ' + response.data.message);
-                        }
-                    },
-                    error: function() {
-                        statusSpan.removeClass().addClass('error').html('❌ Search failed. Please try again.');
-                    }
-                });
-            });
-            
-            // ============== RENDER AI IMAGES ==============
-            function renderAiImages(images) {
-                var grid = $('#aia_ai_image_grid');
-                grid.html('');
-                
-                $.each(images, function(index, image) {
-                    var rank = index + 1;
-                    var score = image.score || 0;
-                    var scoreColor = score > 70 ? '#28a745' : (score > 40 ? '#f0ad4e' : '#dc3545');
-                    
-                    var card = $('<div class="aia-image-card" data-image-url="' + image.url + '" data-image-id="' + image.id + '">');
-                    card.html(`
-                        <div class="aia-image-overlay"></div>
-                        <div class="aia-rank-badge">#${rank}</div>
-                        <img src="${image.thumb}" alt="${image.alt}" loading="lazy" />
-                        <div class="aia-image-info">
-                            <span class="author">📸 ${image.author}</span>
-                            <span style="float: right;">${image.width}×${image.height}</span>
-                        </div>
-                        <div style="padding: 0 10px; font-size: 12px; color: #666;">
-                            Relevance: <strong style="color: ${scoreColor};">${score}%</strong>
-                            <span style="margin-left: 10px;">${image.match_count || 0} keywords matched</span>
-                        </div>
-                        <div class="aia-image-actions">
-                            <button class="aia-apply-btn" data-image-url="${image.url}" data-image-id="${image.id}">Apply as Featured</button>
-                            <a href="${image.url}" target="_blank" style="margin-left: 5px; font-size: 11px;">View</a>
-                        </div>
-                    `);
-                    
-                    // Click to select
-                    card.on('click', function(e) {
-                        if (!$(e.target).closest('.aia-image-actions').length) {
-                            $('.aia-image-card').removeClass('selected');
-                            $(this).addClass('selected');
-                        }
-                    });
-                    
-                    // Apply button
-                    card.find('.aia-apply-btn').on('click', function(e) {
-                        e.stopPropagation();
-                        var imageUrl = $(this).data('image-url');
-                        var imageId = $(this).data('image-id');
-                        var postId = $('#aia_select_post').val();
-                        var button = $(this);
-                        
-                        if (!postId) {
-                            alert('Please select a post in the "Manual Image Search" section first.');
-                            return;
-                        }
-                        
-                        button.text('Applying...').prop('disabled', true);
-                        
-                        $.ajax({
-                            url: ajaxurl,
-                            type: 'POST',
-                            data: {
-                                action: 'aia_set_featured_image',
-                                post_id: postId,
-                                image_url: imageUrl,
-                                image_id: imageId,
-                                nonce: testNonce
-                            },
-                            success: function(response) {
-                                button.text('Apply as Featured').prop('disabled', false);
-                                if (response.success) {
-                                    alert('✅ Featured image set successfully!');
-                                    $('#aia_current_featured').html('Current featured: <a href="' + imageUrl + '" target="_blank">View Image</a>');
-                                } else {
-                                    alert('❌ ' + response.data.message);
-                                }
-                            },
-                            error: function(xhr) {
-                                button.text('Apply as Featured').prop('disabled', false);
-                                var errorMsg = 'Failed to set featured image. Please try again.';
-                                if (xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
-                                    errorMsg = xhr.responseJSON.data.message;
-                                }
-                                alert('❌ ' + errorMsg);
-                            }
-                        });
-                    });
-                    
-                    grid.append(card);
                 });
             }
             
-            // ============== MANUAL SEARCH IMAGES ==============
+            // ============== MANUAL SEARCH ==============
             $('#aia_search_images').on('click', function() {
                 var keyword = $('#aia_search_keyword').val().trim();
                 var statusSpan = $('#aia_search_status');
@@ -636,15 +444,7 @@ class AIA_Image_Settings {
                     return;
                 }
                 
-                currentQuery = keyword;
-                currentPage = 1;
-                
-                statusSpan.removeClass().addClass('loading').text('Searching...');
-                $('#aia_image_results').show();
-                $('#aia_image_grid').html('');
-                $('#aia_load_more_container').hide();
-                
-                searchImages(keyword, 1, statusSpan);
+                performSearch(keyword, statusSpan);
             });
             
             // Enter key support for search
@@ -654,16 +454,69 @@ class AIA_Image_Settings {
                 }
             });
             
+            // ============== SELECT POST - Auto search ==============
+            $('#aia_select_post').on('change', function() {
+                var postId = $(this).val();
+                var selectedOption = $(this).find('option:selected');
+                var keyword = selectedOption.data('keyword');
+                
+                // Reset
+                $('#aia_image_results').hide();
+                $('#aia_image_grid').html('');
+                $('#aia_search_keyword_display').text('—');
+                $('#aia_search_status').removeClass().text('');
+                $('#aia_current_featured_link').hide();
+                $('#aia_no_featured').show();
+                $('#aia_current_featured_status').text('');
+                
+                if (!postId) {
+                    return;
+                }
+                
+                // Show current featured image
+                getCurrentFeatured(postId);
+                
+                // Check if post has a keyword
+                if (!keyword) {
+                    $('#aia_search_keyword_display').text('No keyword found');
+                    $('#aia_search_status').removeClass().addClass('error').text('❌ No keyword');
+                    return;
+                }
+                
+                // Display the keyword
+                $('#aia_search_keyword_display').text('"' + keyword + '"');
+                $('#aia_search_status').removeClass().addClass('loading').text('Searching...');
+                
+                // Auto search with the post's keyword
+                performSearch(keyword, $('#aia_search_status'), postId);
+            });
+            
+            // ============== PERFORM SEARCH ==============
+            function performSearch(keyword, statusSpan, postId) {
+                currentQuery = keyword;
+                currentPage = 1;
+                currentPostId = postId || 0;
+                
+                statusSpan.removeClass().addClass('loading').text('Searching...');
+                $('#aia_image_results').show();
+                $('#aia_image_grid').html('');
+                $('#aia_load_more_container').hide();
+                $('#aia_result_count').text('');
+                $('#aia_search_term_display').text('Searching for: "' + keyword + '"');
+                
+                searchImages(keyword, 1, statusSpan, currentPostId);
+            }
+            
             // ============== LOAD MORE ==============
             $('#aia_load_more').on('click', function() {
                 currentPage++;
                 var statusSpan = $('#aia_search_status');
                 statusSpan.removeClass().addClass('loading').text('Loading more...');
-                searchImages(currentQuery, currentPage, statusSpan);
+                searchImages(currentQuery, currentPage, statusSpan, currentPostId);
             });
             
             // ============== SEARCH IMAGES FUNCTION ==============
-            function searchImages(keyword, page, statusSpan) {
+            function searchImages(keyword, page, statusSpan, postId) {
                 var api_key = $('#aia_unsplash_access_key').val();
                 
                 if (!api_key) {
@@ -675,17 +528,20 @@ class AIA_Image_Settings {
                     url: ajaxurl,
                     type: 'POST',
                     data: {
-                        action: 'aia_search_unsplash_images',
+                        action: 'aia_search_images',
                         keyword: keyword,
                         page: page,
                         per_page: 12,
                         api_key: api_key,
+                        post_id: postId,
                         nonce: testNonce
                     },
                     success: function(response) {
                         if (response.success) {
                             statusSpan.removeClass().addClass('success').text('✅ Found ' + response.data.total + ' images');
-                            renderManualImages(response.data.images);
+                            $('#aia_result_count').text(response.data.total + ' images found');
+                            $('#aia_search_term_display').text('Search term: "' + keyword + '"');
+                            renderImages(response.data.images, postId);
                             
                             totalPages = response.data.total_pages;
                             if (page < totalPages) {
@@ -704,8 +560,8 @@ class AIA_Image_Settings {
                 });
             }
             
-            // ============== RENDER MANUAL IMAGES ==============
-            function renderManualImages(images) {
+            // ============== RENDER IMAGES ==============
+            function renderImages(images, postId) {
                 var grid = $('#aia_image_grid');
                 
                 if (images.length === 0) {
@@ -714,14 +570,20 @@ class AIA_Image_Settings {
                 }
                 
                 $.each(images, function(index, image) {
+                    var rank = index + 1;
+                    var score = image.score || 0;
+                    var scoreColor = score > 70 ? '#28a745' : (score > 40 ? '#f0ad4e' : '#dc3545');
+                    
                     var card = $('<div class="aia-image-card" data-image-url="' + image.url + '" data-image-id="' + image.id + '">');
                     card.html(`
                         <div class="aia-image-overlay"></div>
+                        ${score ? '<div class="aia-rank-badge">#' + rank + '</div>' : ''}
                         <img src="${image.thumb}" alt="${image.alt}" loading="lazy" />
                         <div class="aia-image-info">
                             <span class="author">📸 ${image.author}</span>
                             <span style="float: right;">${image.width}×${image.height}</span>
                         </div>
+                        ${score ? '<div style="padding: 0 10px; font-size: 12px; color: #666;">Relevance: <strong style="color: ' + scoreColor + ';">' + score + '%</strong><span style="margin-left: 10px;">' + (image.match_count || 0) + ' keywords matched</span></div>' : ''}
                         <div class="aia-image-actions">
                             <button class="aia-apply-btn" data-image-url="${image.url}" data-image-id="${image.id}">Apply as Featured</button>
                             <a href="${image.url}" target="_blank" style="margin-left: 5px; font-size: 11px;">View</a>
@@ -739,11 +601,12 @@ class AIA_Image_Settings {
                         e.stopPropagation();
                         var imageUrl = $(this).data('image-url');
                         var imageId = $(this).data('image-id');
-                        var postId = $('#aia_select_post').val();
                         var button = $(this);
                         
-                        if (!postId) {
-                            alert('Please select a post first.');
+                        var targetPostId = postId || $('#aia_select_post').val();
+                        
+                        if (!targetPostId) {
+                            alert('No post selected. Please select a post first.');
                             return;
                         }
                         
@@ -754,7 +617,7 @@ class AIA_Image_Settings {
                             type: 'POST',
                             data: {
                                 action: 'aia_set_featured_image',
-                                post_id: postId,
+                                post_id: targetPostId,
                                 image_url: imageUrl,
                                 image_id: imageId,
                                 nonce: testNonce
@@ -762,8 +625,8 @@ class AIA_Image_Settings {
                             success: function(response) {
                                 button.text('Apply as Featured').prop('disabled', false);
                                 if (response.success) {
-                                    alert('✅ Featured image set successfully!');
-                                    $('#aia_current_featured').html('Current featured: <a href="' + imageUrl + '" target="_blank">View Image</a>');
+                                    alert('✅ Featured image set successfully with keyword as alt text!');
+                                    getCurrentFeatured(targetPostId);
                                 } else {
                                     alert('❌ ' + response.data.message);
                                 }
@@ -782,35 +645,6 @@ class AIA_Image_Settings {
                     grid.append(card);
                 });
             }
-            
-            // ============== SELECT POST ==============
-            $('#aia_select_post').on('change', function() {
-                var postId = $(this).val();
-                if (postId) {
-                    $('#aia_current_featured').html('Loading...');
-                    $.ajax({
-                        url: ajaxurl,
-                        type: 'POST',
-                        data: {
-                            action: 'aia_get_featured_image',
-                            post_id: postId,
-                            nonce: testNonce
-                        },
-                        success: function(response) {
-                            if (response.success && response.data.url) {
-                                $('#aia_current_featured').html('Current featured: <a href="' + response.data.url + '" target="_blank">View Image</a>');
-                            } else {
-                                $('#aia_current_featured').html('No featured image set for this post.');
-                            }
-                        },
-                        error: function() {
-                            $('#aia_current_featured').html('Failed to get featured image.');
-                        }
-                    });
-                } else {
-                    $('#aia_current_featured').html('');
-                }
-            });
         });
         </script>
         <?php
@@ -893,9 +727,9 @@ class AIA_Image_Settings {
     }
     
     /**
-     * AJAX: Search Unsplash Images (Manual)
+     * AJAX: Unified Image Search
      */
-    public function search_unsplash_images() {
+    public function search_images() {
         if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'aia_test_unsplash')) {
             wp_send_json_error(array('message' => 'Security check failed'));
             return;
@@ -910,6 +744,7 @@ class AIA_Image_Settings {
         $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
         $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 12;
         $api_key = isset($_POST['api_key']) ? sanitize_text_field($_POST['api_key']) : '';
+        $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
         
         if (empty($keyword)) {
             wp_send_json_error(array('message' => 'Keyword is required'));
@@ -921,8 +756,8 @@ class AIA_Image_Settings {
             return;
         }
         
-        // Use Image Manager for search
-        $images = $this->image_manager->search_unsplash_with_keyword($keyword);
+        // Search with the provided keyword
+        $images = $this->image_manager->search_unsplash_with_keyword($keyword, 30);
         
         if (empty($images)) {
             wp_send_json_success(array(
@@ -934,124 +769,22 @@ class AIA_Image_Settings {
             return;
         }
         
-        // Paginate results manually (since we're using the Image Manager)
-        $start = ($page - 1) * $per_page;
-        $paginated_images = array_slice($images, $start, $per_page);
-        $total = count($images);
-        $total_pages = ceil($total / $per_page);
-        
-        $images_response = array();
-        foreach ($paginated_images as $result) {
-            $images_response[] = array(
-                'id' => $result['id'],
-                'url' => $result['urls']['raw'] ?? $result['urls']['full'] ?? $result['urls']['regular'],
-                'thumb' => $result['urls']['thumb'] ?? $result['urls']['small'],
-                'author' => $result['user']['name'] ?? 'Unknown',
-                'alt' => $result['alt_description'] ?? $result['description'] ?? 'Image',
-                'width' => $result['width'] ?? 0,
-                'height' => $result['height'] ?? 0
-            );
-        }
-        
-        wp_send_json_success(array(
-            'images' => $images_response,
-            'total' => $total,
-            'total_pages' => $total_pages,
-            'page' => $page
-        ));
-    }
-    
-    /**
-     * AJAX: AI-Powered Image Search
-     */
-    public function ai_search_images() {
-        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'aia_test_unsplash')) {
-            wp_send_json_error(array('message' => 'Security check failed'));
-            return;
-        }
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => 'Insufficient permissions'));
-            return;
-        }
-        
-        $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
-        
-        if (!$post_id) {
-            wp_send_json_error(array('message' => 'Invalid post ID'));
-            return;
-        }
-        
-        $post = get_post($post_id);
-        if (!$post) {
-            wp_send_json_error(array('message' => 'Post not found'));
-            return;
-        }
-        
-        $api_key = get_option('aia_unsplash_access_key', '');
-        if (empty($api_key)) {
-            wp_send_json_error(array('message' => 'Unsplash API key not configured'));
-            return;
-        }
-        
-        // Get AI provider settings
-        $ai_provider = get_option('aia_ai_provider', 'gemini');
-        $ai_api_key = get_option('aia_api_key', '');
-        
-        if (empty($ai_api_key)) {
-            wp_send_json_error(array('message' => 'AI API key not configured. Please configure AI settings first.'));
-            return;
-        }
-        
-        $logger = new AIA_Logger();
-        
-        // Prepare post data for image manager
-        $post_data = array(
-            'title' => $post->post_title,
-            'keyword' => get_post_meta($post->ID, '_aia_keyword', true) ?: '',
-            'content' => $post->post_content
-        );
-        
-        // Step 1: Generate search keyword using Image Manager
-        $search_keyword = $this->image_manager->generate_ai_search_keyword($post_data);
-        
-        // If AI fails or returns the title, use a fallback
-        if (empty($search_keyword) || strlen($search_keyword) > 30 || strpos(strtolower($search_keyword), strtolower($post->post_title)) !== false) {
-            $logger->log("AI returned title instead of keyword, using fallback", 'warning');
-            $search_keyword = $this->image_manager->generate_fallback_keyword($post_data);
-        }
-        
-        $logger->log("AI generated search keyword for post {$post_id}: {$search_keyword}", 'info');
-        
-        // Step 2: Search Unsplash with the keyword
-        $images = $this->image_manager->search_unsplash_with_keyword($search_keyword);
-        
-        if (empty($images)) {
-            // Try with a more general fallback
-            $fallback_keyword = $this->image_manager->generate_fallback_keyword($post_data);
-            $images = $this->image_manager->search_unsplash_with_keyword($fallback_keyword);
-            $search_keyword = $fallback_keyword;
-        }
-        
-        if (empty($images)) {
-            wp_send_json_error(array('message' => 'No images found. Try a different post.'));
-            return;
-        }
-        
-        // Step 3: Score images
-        $scored_images = $this->image_manager->score_images($images, $post_data);
+        // Score images
+        $scored_images = $this->image_manager->score_images($images, $keyword);
         
         // Sort by score (highest first)
         usort($scored_images, function($a, $b) {
             return $b['score'] - $a['score'];
         });
         
-        // Get top 5 images
-        $top_images = array_slice($scored_images, 0, 5);
+        // Paginate results
+        $start = ($page - 1) * $per_page;
+        $paginated_images = array_slice($scored_images, $start, $per_page);
+        $total = count($scored_images);
+        $total_pages = ceil($total / $per_page);
         
-        // Prepare response
         $images_response = array();
-        foreach ($top_images as $item) {
+        foreach ($paginated_images as $item) {
             $image = $item['image'];
             $images_response[] = array(
                 'id' => $image['id'],
@@ -1067,9 +800,11 @@ class AIA_Image_Settings {
         }
         
         wp_send_json_success(array(
-            'message' => 'Found ' . count($images_response) . ' relevant images for your post',
-            'search_term' => $search_keyword,
-            'images' => $images_response
+            'images' => $images_response,
+            'total' => $total,
+            'total_pages' => $total_pages,
+            'page' => $page,
+            'search_term' => $keyword
         ));
     }
     
@@ -1089,6 +824,7 @@ class AIA_Image_Settings {
         
         $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
         $image_url = isset($_POST['image_url']) ? esc_url_raw($_POST['image_url']) : '';
+        $image_id = isset($_POST['image_id']) ? sanitize_text_field($_POST['image_id']) : '';
         
         if (!$post_id) {
             wp_send_json_error(array('message' => 'Invalid post ID'));
@@ -1100,19 +836,19 @@ class AIA_Image_Settings {
             return;
         }
         
-        $result = $this->download_and_set_featured_image($post_id, $image_url);
+        $result = $this->download_and_set_featured_image($post_id, $image_url, $image_id);
         
         if ($result) {
-            wp_send_json_success(array('message' => 'Featured image set successfully'));
+            wp_send_json_success(array('message' => 'Featured image set successfully with keyword as alt text'));
         } else {
             wp_send_json_error(array('message' => 'Failed to set featured image'));
         }
     }
     
     /**
-     * Download and set featured image
+     * Download and set featured image with proper alt text
      */
-    private function download_and_set_featured_image($post_id, $image_url) {
+    private function download_and_set_featured_image($post_id, $image_url, $image_id = '') {
         $logger = new AIA_Logger();
         
         $tmp = download_url($image_url);
@@ -1139,9 +875,35 @@ class AIA_Image_Settings {
             return false;
         }
         
+        // Set as featured image
         set_post_thumbnail($post_id, $attachment_id);
         
-        $logger->log("Featured image set successfully for post ID: {$post_id}", 'success');
+        // ============================================================
+        // Get the post keyword and set as image alt text and title
+        // ============================================================
+        $post_keyword = get_post_meta($post_id, '_aia_keyword', true);
+        $post_title = get_the_title($post_id);
+        
+        // Use keyword if available, otherwise use post title
+        $alt_text = !empty($post_keyword) ? $post_keyword : $post_title;
+        
+        // Update attachment meta with alt text
+        update_post_meta($attachment_id, '_wp_attachment_image_alt', sanitize_text_field($alt_text));
+        
+        // Update attachment post title and excerpt
+        $attachment_data = array(
+            'ID' => $attachment_id,
+            'post_title' => sanitize_text_field($alt_text),
+            'post_excerpt' => sanitize_text_field($alt_text),
+        );
+        wp_update_post($attachment_data);
+        
+        // Also store the Unsplash image ID if provided
+        if (!empty($image_id)) {
+            update_post_meta($attachment_id, '_aia_unsplash_image_id', $image_id);
+        }
+        
+        $logger->log("Featured image set successfully for post ID: {$post_id} with alt text: '{$alt_text}'", 'success');
         
         return true;
     }
