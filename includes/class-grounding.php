@@ -1,461 +1,273 @@
 <?php
-// includes/class-generator.php
+// includes/class-grounding.php
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class AIA_Content_Generator {
+class AIA_Grounding_System {
     
-    private $grounding_system;
-    private $image_manager;
+    private $logger;
+    private $provider;
+    private $api_key;
+    private $model;
+    private $grounding_enabled;
     
     public function __construct() {
-        $this->grounding_system = new AIA_Grounding_System();
-        $this->image_manager = new AIA_Image_Manager();
+        $this->logger = new AIA_Logger();
+        $this->provider = get_option('aia_ai_provider', 'gemini');
+        $this->grounding_enabled = get_option('aia_enable_grounding', 0);
+        
+        if ($this->provider === 'gemini') {
+            $this->api_key = get_option('aia_api_key', '');
+            $this->model = get_option('aia_gemini_model', 'gemini-2.0-flash');
+        } else {
+            $this->api_key = get_option('aia_glm_api_key', '');
+            $this->model = get_option('aia_glm_model', 'glm-4-flash');
+        }
     }
     
-    public function generate_post($keyword, $author_id, $categories = array()) {
-        // Get author data from WordPress user
-        $user = get_userdata($author_id);
-        if (!$user) {
+    /**
+     * Research a topic using the configured AI provider
+     */
+    public function research_topic($keyword) {
+        if (empty($this->api_key)) {
+            $this->logger->log("Research failed: API key not configured for provider: " . $this->provider, 'error');
             return false;
         }
         
-        // Get author style
-        $author_style = new AIA_Author_Style();
-        $author = $author_style->get_author_by_id($author_id);
+        $this->logger->log("Researching topic: '" . $keyword . "' using " . $this->provider, 'info');
         
-        if (!$author) {
+        // Get blog instructions
+        $instructions = $this->get_blog_instructions();
+        if (empty($instructions)) {
+            $this->logger->log("Research failed: No blog instructions found", 'error');
             return false;
         }
         
-        // Get research data - will return false if failed
-        $research = $this->grounding_system->research_topic($keyword);
+        // Build the prompt
+        $prompt = $this->build_prompt($keyword, $instructions);
         
-        // If research failed, return false - no post will be created
-        if ($research === false) {
-            $logger = new AIA_Logger();
-            $logger->log("Research failed for keyword '{$keyword}'. Skipping post generation.", 'error');
+        // Call the AI API
+        $response = $this->call_api($prompt);
+        
+        if ($response === false) {
+            $this->logger->log("Research failed: API call returned false for keyword: '" . $keyword . "'", 'error');
             return false;
         }
         
-        // Extract content from research
-        $content_data = $this->extract_content_from_research($research);
+        // Parse the response
+        $parsed_response = $this->parse_response($response);
         
-        // Add categories to the result
-        $content_data['categories'] = $categories;
-        
-        // Debug logging
-        $logger = new AIA_Logger();
-        $logger->log("Extracted content: title=" . ($content_data['title'] ?? 'NOT SET') . ", content_length=" . strlen($content_data['content'] ?? ''), 'debug');
-        if (!empty($categories)) {
-            $logger->log("Categories: " . implode(', ', $categories), 'debug');
-        }
-        
-        // Validate content before returning
-        if (empty($content_data['content']) || strlen(strip_tags($content_data['content'])) < 300) {
-            $logger = new AIA_Logger();
-            $logger->log("Generated content for '{$keyword}' is too short or empty. Word count: " . str_word_count(strip_tags($content_data['content'] ?? '')), 'error');
+        if ($parsed_response === false) {
+            $this->logger->log("Research failed: Failed to parse API response for keyword: '" . $keyword . "'", 'error');
             return false;
         }
         
-        return $content_data;
-    }
-    
-    private function extract_content_from_research($research) {
-        $summaries = $research['summaries'] ?? '';
-        $logger = new AIA_Logger();
+        $this->logger->log("Research completed successfully for keyword: '" . $keyword . "'", 'success');
         
-        // If summaries is an array (JSON data), extract fields
-        if (is_array($summaries)) {
-            // Check if we have the parsed JSON structure
-            if (isset($summaries['seo_title']) && isset($summaries['content'])) {
-                $seo_title = $summaries['seo_title'] ?? '';
-                $meta_description = $summaries['meta_description'] ?? '';
-                $content = $summaries['content'] ?? '';
-                $featured_image_url = $summaries['featured_image_url'] ?? '';
-                
-                // Clean up the content
-                $content = $this->clean_content($content);
-                
-                // If no SEO title found, generate one
-                if (empty($seo_title)) {
-                    $seo_title = $this->extract_title_from_content($content);
-                }
-                
-                // If no meta description found, generate one
-                if (empty($meta_description)) {
-                    $meta_description = $this->extract_meta_from_content($content);
-                }
-                
-                // ============================================================
-                // FIXED: Use Unsplash for featured image, NOT picsum
-                // ============================================================
-                $featured_image = '';
-                $image_score = 0;
-                
-                if (!empty($seo_title)) {
-                    // Use the SEO title as the keyword for image search
-                    $image_result = $this->image_manager->get_image_for_post(array(
-                        'keyword' => $seo_title,
-                        'title' => $seo_title
-                    ));
-                    
-                    if ($image_result && isset($image_result['url'])) {
-                        $featured_image = $image_result['url'];
-                        $image_score = $image_result['score'] ?? 0;
-                        $logger->log("Featured image from Unsplash: " . substr($featured_image, 0, 100) . '... (score: ' . $image_score . ')', 'info');
-                    } else {
-                        $logger->log("Failed to get Unsplash image for keyword: '" . $seo_title . "'", 'error');
-                    }
-                }
-                
-                // If no featured image from Unsplash, log error (DO NOT use picsum fallback)
-                if (empty($featured_image)) {
-                    $logger->log("WARNING: No Unsplash image found for post. Featured image will be empty.", 'warning');
-                }
-                
-                return [
-                    'title' => $seo_title,
-                    'meta_description' => $meta_description,
-                    'content' => $content,
-                    'featured_image' => $featured_image,
-                    'featured_image_score' => $image_score,
-                    'excerpt' => wp_trim_words(strip_tags($content), 55)
-                ];
-            }
-            
-            // If we have a 'content' field but no 'seo_title', try to extract
-            if (isset($summaries['content'])) {
-                $content = $summaries['content'];
-                $content = $this->clean_content($content);
-                
-                // Try to extract title from content
-                $seo_title = $this->extract_title_from_content($content);
-                $meta_description = $this->extract_meta_from_content($content);
-                
-                // ============================================================
-                // FIXED: Use Unsplash for featured image, NOT picsum
-                // ============================================================
-                $featured_image = '';
-                $image_score = 0;
-                
-                if (!empty($seo_title)) {
-                    $image_result = $this->image_manager->get_image_for_post(array(
-                        'keyword' => $seo_title,
-                        'title' => $seo_title
-                    ));
-                    
-                    if ($image_result && isset($image_result['url'])) {
-                        $featured_image = $image_result['url'];
-                        $image_score = $image_result['score'] ?? 0;
-                        $logger->log("Featured image from Unsplash: " . substr($featured_image, 0, 100) . '... (score: ' . $image_score . ')', 'info');
-                    } else {
-                        $logger->log("Failed to get Unsplash image for keyword: '" . $seo_title . "'", 'error');
-                    }
-                }
-                
-                if (empty($featured_image)) {
-                    $logger->log("WARNING: No Unsplash image found for post. Featured image will be empty.", 'warning');
-                }
-                
-                return [
-                    'title' => $seo_title,
-                    'meta_description' => $meta_description,
-                    'content' => $content,
-                    'featured_image' => $featured_image,
-                    'featured_image_score' => $image_score,
-                    'excerpt' => wp_trim_words(strip_tags($content), 55)
-                ];
-            }
-        }
-        
-        // Fallback: try to extract from raw content (string)
-        if (is_string($summaries)) {
-            // Try to parse as JSON
-            $parsed = $this->parse_json_response($summaries);
-            
-            if ($parsed && isset($parsed['seo_title']) && isset($parsed['content'])) {
-                $seo_title = $parsed['seo_title'] ?? '';
-                $meta_description = $parsed['meta_description'] ?? '';
-                $content = $parsed['content'] ?? '';
-                
-                // Clean up the content
-                $content = $this->clean_content($content);
-                
-                // ============================================================
-                // FIXED: Use Unsplash for featured image, NOT picsum
-                // ============================================================
-                $featured_image = '';
-                $image_score = 0;
-                
-                if (!empty($seo_title)) {
-                    $image_result = $this->image_manager->get_image_for_post(array(
-                        'keyword' => $seo_title,
-                        'title' => $seo_title
-                    ));
-                    
-                    if ($image_result && isset($image_result['url'])) {
-                        $featured_image = $image_result['url'];
-                        $image_score = $image_result['score'] ?? 0;
-                        $logger->log("Featured image from Unsplash: " . substr($featured_image, 0, 100) . '... (score: ' . $image_score . ')', 'info');
-                    } else {
-                        $logger->log("Failed to get Unsplash image for keyword: '" . $seo_title . "'", 'error');
-                    }
-                }
-                
-                if (empty($featured_image)) {
-                    $logger->log("WARNING: No Unsplash image found for post. Featured image will be empty.", 'warning');
-                }
-                
-                return [
-                    'title' => $seo_title,
-                    'meta_description' => $meta_description,
-                    'content' => $content,
-                    'featured_image' => $featured_image,
-                    'featured_image_score' => $image_score,
-                    'excerpt' => wp_trim_words(strip_tags($content), 55)
-                ];
-            }
-            
-            // If JSON parsing failed, try to extract manually
-            $seo_title = $this->extract_seo_title($summaries);
-            $meta_description = $this->extract_meta_description($summaries);
-            $content = $this->extract_content($summaries);
-            
-            // Clean up the content
-            $content = $this->clean_content($content);
-            
-            // ============================================================
-            // FIXED: Use Unsplash for featured image, NOT picsum
-            // ============================================================
-            $featured_image = '';
-            $image_score = 0;
-            
-            if (!empty($seo_title)) {
-                $image_result = $this->image_manager->get_image_for_post(array(
-                    'keyword' => $seo_title,
-                    'title' => $seo_title
-                ));
-                
-                if ($image_result && isset($image_result['url'])) {
-                    $featured_image = $image_result['url'];
-                    $image_score = $image_result['score'] ?? 0;
-                    $logger->log("Featured image from Unsplash: " . substr($featured_image, 0, 100) . '... (score: ' . $image_score . ')', 'info');
-                } else {
-                    $logger->log("Failed to get Unsplash image for keyword: '" . $seo_title . "'", 'error');
-                }
-            }
-            
-            if (empty($featured_image)) {
-                $logger->log("WARNING: No Unsplash image found for post. Featured image will be empty.", 'warning');
-            }
-            
-            return [
-                'title' => $seo_title,
-                'meta_description' => $meta_description,
-                'content' => $content,
-                'featured_image' => $featured_image,
-                'featured_image_score' => $image_score,
-                'excerpt' => wp_trim_words(strip_tags($content), 55)
-            ];
-        }
-        
-        // Ultimate fallback - should never reach here
-        $logger->log("ERROR: Could not extract content from research data. Type: " . gettype($summaries), 'error');
         return [
-            'title' => 'Blog Post',
-            'meta_description' => '',
-            'content' => is_string($summaries) ? $summaries : '',
-            'featured_image' => '',
-            'featured_image_score' => 0,
-            'excerpt' => ''
+            'keyword' => $keyword,
+            'summaries' => $parsed_response,
+            'timestamp' => current_time('mysql')
         ];
     }
     
     /**
-     * Parse JSON response from AI
+     * Get blog instructions from the txt file
      */
-    private function parse_json_response($content) {
-        // Clean the content - remove any markdown code fences
+    private function get_blog_instructions() {
+        $instructions_file = AIA_DATA_DIR . 'blog_instructions.txt';
+        
+        if (!file_exists($instructions_file)) {
+            $this->logger->log("Blog instructions file not found: " . $instructions_file, 'error');
+            return false;
+        }
+        
+        return file_get_contents($instructions_file);
+    }
+    
+    /**
+     * Build the prompt for the AI
+     */
+    private function build_prompt($keyword, $instructions) {
+        // Replace placeholders
+        $prompt = str_replace('[Generated from keyword]', $keyword, $instructions);
+        $prompt = str_replace('[Generated from keyword]', $keyword, $prompt);
+        
+        return $prompt;
+    }
+    
+    /**
+     * Call the AI API
+     */
+    private function call_api($prompt) {
+        if ($this->provider === 'gemini') {
+            return $this->call_gemini($prompt);
+        } else {
+            return $this->call_glm($prompt);
+        }
+    }
+    
+    /**
+     * Call Gemini API
+     */
+    private function call_gemini($prompt) {
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->api_key}";
+        
+        $body = [
+            'contents' => [
+                [
+                    'parts' => [
+                        ['text' => $prompt]
+                    ]
+                ]
+            ]
+        ];
+        
+        // Enable grounding if configured
+        if ($this->grounding_enabled && (strpos($this->model, '2.0') !== false || strpos($this->model, '2.5') !== false || strpos($this->model, '3.') !== false)) {
+            $body['tools'] = [['googleSearch' => new stdClass()]];
+            $this->logger->log("Grounding enabled for Gemini", 'debug');
+        }
+        
+        $response = wp_remote_post($url, [
+            'headers' => ['Content-Type' => 'application/json'],
+            'body' => json_encode($body),
+            'timeout' => 120
+        ]);
+        
+        if (is_wp_error($response)) {
+            $this->logger->log("Gemini API error: " . $response->get_error_message(), 'error');
+            return false;
+        }
+        
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+        
+        if (isset($data['error'])) {
+            $error_msg = $data['error']['message'] ?? 'Unknown error';
+            $this->logger->log("Gemini API error: " . $error_msg, 'error');
+            return false;
+        }
+        
+        if (isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+            return $data['candidates'][0]['content']['parts'][0]['text'];
+        }
+        
+        $this->logger->log("Gemini API: Unexpected response structure", 'error');
+        return false;
+    }
+    
+    /**
+     * Call GLM API
+     */
+    private function call_glm($prompt) {
+        $url = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+        
+        $body = [
+            'model' => $this->model,
+            'messages' => [
+                ['role' => 'user', 'content' => $prompt]
+            ],
+            'temperature' => 0.7,
+            'max_tokens' => 4096
+        ];
+        
+        $response = wp_remote_post($url, [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $this->api_key
+            ],
+            'body' => json_encode($body),
+            'timeout' => 120
+        ]);
+        
+        if (is_wp_error($response)) {
+            $this->logger->log("GLM API error: " . $response->get_error_message(), 'error');
+            return false;
+        }
+        
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+        
+        if (isset($data['error'])) {
+            $error_msg = $data['error']['message'] ?? 'Unknown error';
+            $this->logger->log("GLM API error: " . $error_msg, 'error');
+            return false;
+        }
+        
+        if (isset($data['choices'][0]['message']['content'])) {
+            return $data['choices'][0]['message']['content'];
+        }
+        
+        $this->logger->log("GLM API: Unexpected response structure", 'error');
+        return false;
+    }
+    
+    /**
+     * Parse the AI response
+     */
+    private function parse_response($response) {
+        // Try to extract JSON
+        $json = $this->extract_json($response);
+        
+        if ($json) {
+            return $json;
+        }
+        
+        // If no JSON found, return the raw response
+        return $response;
+    }
+    
+    /**
+     * Extract JSON from the response
+     */
+    private function extract_json($content) {
+        // Remove markdown code fences
         $content = preg_replace('/```json\s*/', '', $content);
         $content = preg_replace('/```\s*/', '', $content);
         $content = trim($content);
         
-        // Try to parse the entire response as JSON
+        // Try to parse as JSON
         $data = json_decode($content, true);
-        if ($data && isset($data['seo_title']) && isset($data['content'])) {
-            return $this->clean_parsed_data($data);
+        if ($data && is_array($data)) {
+            return $data;
         }
         
-        // Try with more flexible pattern
-        if (preg_match('/\{("seo_title"|"content"|"meta_description")[^}]*\}/s', $content, $matches)) {
+        // Try to find JSON in the content
+        if (preg_match('/\{[^{}]*"seo_title"[^{}]*"content"[^{}]*\}/s', $content, $matches)) {
             $json_string = $this->fix_json_string($matches[0]);
             $data = json_decode($json_string, true);
-            if ($data && isset($data['seo_title']) && isset($data['content'])) {
-                return $this->clean_parsed_data($data);
+            if ($data && is_array($data)) {
+                return $data;
+            }
+        }
+        
+        // Try to find any JSON object
+        if (preg_match('/\{[^{}]*\}/s', $content, $matches)) {
+            $json_string = $this->fix_json_string($matches[0]);
+            $data = json_decode($json_string, true);
+            if ($data && is_array($data)) {
+                return $data;
             }
         }
         
         return null;
     }
     
-    private function clean_parsed_data($data) {
-        // Clean seo_title
-        if (isset($data['seo_title'])) {
-            $data['seo_title'] = stripslashes(trim($data['seo_title']));
-        }
-        
-        // Clean meta_description
-        if (isset($data['meta_description'])) {
-            $data['meta_description'] = stripslashes(trim($data['meta_description']));
-        }
-        
-        // Clean content - handle all escaping cases
-        if (isset($data['content'])) {
-            $content = $data['content'];
-            
-            // Handle double escaping
-            $content = str_replace('\\n', "\n", $content);
-            $content = str_replace('\n', "\n", $content);
-            $content = str_replace('\\"', '"', $content);
-            $content = str_replace('\"', '"', $content);
-            $content = str_replace('\\t', "\t", $content);
-            $content = str_replace('\t', "\t", $content);
-            $content = str_replace('\\/', '/', $content);
-            $content = str_replace('\/', '/', $content);
-            
-            // Remove any remaining backslashes
-            $content = stripslashes($content);
-            
-            // Trim
-            $content = trim($content);
-            
-            $data['content'] = $content;
-        }
-        
-        return $data;
-    }
-    
+    /**
+     * Fix common JSON issues
+     */
     private function fix_json_string($json) {
-        // Remove any trailing commas
+        // Remove trailing commas
         $json = preg_replace('/,\s*}/', '}', $json);
         $json = preg_replace('/,\s*\]/', ']', $json);
         
+        // Unescape double quotes inside the JSON
+        $json = str_replace('\\"', '"', $json);
+        $json = str_replace('\"', '"', $json);
+        
         return $json;
-    }
-    
-    private function clean_content($content) {
-        // Remove any escaped newlines
-        $content = str_replace('\\n', "\n", $content);
-        $content = str_replace('\n', "\n", $content);
-        $content = str_replace('\\t', "    ", $content);
-        $content = str_replace('\t', "    ", $content);
-        $content = str_replace('\\"', '"', $content);
-        $content = str_replace('\"', '"', $content);
-        
-        // Remove any markdown code fences
-        $content = preg_replace('/```json\s*/', '', $content);
-        $content = preg_replace('/```\s*/', '', $content);
-        
-        // Remove any figure/image tags from content (they should be featured images)
-        $content = preg_replace('/<figure[^>]*>.*?<\/figure>/s', '', $content);
-        
-        // If content looks like it has JSON wrapper, try to extract just the HTML
-        if (preg_match('/"content":\s*"([^"]+)"\s*}/s', $content, $matches)) {
-            $content = stripslashes($matches[1]);
-            $content = str_replace('\\n', "\n", $content);
-            $content = str_replace('\n', "\n", $content);
-            $content = str_replace('\\t', "    ", $content);
-            $content = str_replace('\t', "    ", $content);
-            $content = str_replace('\\"', '"', $content);
-            $content = str_replace('\"', '"', $content);
-        }
-        
-        return trim($content);
-    }
-    
-    private function extract_title_from_content($content) {
-        // Try to find H1
-        if (preg_match('/<h1[^>]*>(.*?)<\/h1>/i', $content, $matches)) {
-            return trim(strip_tags($matches[1]));
-        }
-        
-        // Try to find any heading
-        if (preg_match('/<h[2-6][^>]*>(.*?)<\/h[2-6]>/i', $content, $matches)) {
-            return trim(strip_tags($matches[1]));
-        }
-        
-        // Try to find title-like text in first paragraph
-        if (preg_match('/<p[^>]*>(.{10,100})<\/p>/i', $content, $matches)) {
-            $text = trim(strip_tags($matches[1]));
-            if (strlen($text) > 10 && strlen($text) < 100) {
-                return $text;
-            }
-        }
-        
-        return 'Blog Post';
-    }
-    
-    private function extract_meta_from_content($content) {
-        // Try to find first paragraph
-        if (preg_match('/<p[^>]*>(.{50,200})<\/p>/i', $content, $matches)) {
-            $first_para = trim(strip_tags($matches[1]));
-            if (strlen($first_para) > 50) {
-                return substr($first_para, 0, 160);
-            }
-        }
-        
-        return '';
-    }
-    
-    private function extract_seo_title($content) {
-        // Try to find SEO title pattern
-        if (preg_match('/"seo_title":\s*"([^"]+)"/', $content, $matches)) {
-            return stripslashes($matches[1]);
-        }
-        
-        // Try to find H1
-        if (preg_match('/<h1[^>]*>(.*?)<\/h1>/i', $content, $matches)) {
-            return trim(strip_tags($matches[1]));
-        }
-        
-        return 'Blog Post';
-    }
-    
-    private function extract_meta_description($content) {
-        // Try to find meta description pattern
-        if (preg_match('/"meta_description":\s*"([^"]+)"/', $content, $matches)) {
-            return stripslashes($matches[1]);
-        }
-        
-        // Try to find first paragraph
-        if (preg_match('/<p[^>]*>(.{50,200})<\/p>/i', $content, $matches)) {
-            $first_para = trim(strip_tags($matches[1]));
-            if (strlen($first_para) > 50) {
-                return substr($first_para, 0, 160);
-            }
-        }
-        
-        return '';
-    }
-    
-    private function extract_content($content) {
-        // Try to find content pattern
-        if (preg_match('/"content":\s*"((?:[^"\\\\]|\\\\.)*)"/s', $content, $matches)) {
-            $content = stripslashes($matches[1]);
-            $content = str_replace('\n', "\n", $content);
-            $content = str_replace('\t', "    ", $content);
-            $content = str_replace('\"', '"', $content);
-            return $content;
-        }
-        
-        // If content already has HTML, return it
-        if (strpos($content, '<') !== false && strpos($content, '>') !== false) {
-            return $content;
-        }
-        
-        return $content;
     }
 }

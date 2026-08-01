@@ -110,18 +110,21 @@ class AIA_Keywords_Manager {
     }
     
     /**
-     * Delete keyword by ID or numeric index (backward compatible)
+     * Delete keyword by ID (preferred) or numeric index (backward compatible)
      */
     public function delete_keyword($identifier) {
         $keywords = $this->get_all_keywords();
         $found = false;
         
-        // Check if identifier is a numeric index
-        if (is_numeric($identifier) && isset($keywords[intval($identifier)])) {
-            unset($keywords[intval($identifier)]);
-            $found = true;
+        // Check if identifier is a numeric index (backward compatibility)
+        if (is_numeric($identifier)) {
+            $index = intval($identifier);
+            if (isset($keywords[$index])) {
+                unset($keywords[$index]);
+                $found = true;
+            }
         } else {
-            // Check by ID
+            // Check by ID (string identifier)
             foreach ($keywords as $index => $keyword) {
                 if (isset($keyword['id']) && $keyword['id'] === $identifier) {
                     unset($keywords[$index]);
@@ -134,7 +137,15 @@ class AIA_Keywords_Manager {
         if ($found) {
             // Reindex the array
             $keywords = array_values($keywords);
-            return $this->save_keywords($keywords);
+            $result = $this->save_keywords($keywords);
+            
+            if ($result === false) {
+                $logger = new AIA_Logger();
+                $logger->log("Failed to save keywords file after deletion. File: " . $this->keywords_file, 'error');
+                return false;
+            }
+            
+            return true;
         }
         
         return false;
@@ -161,7 +172,45 @@ class AIA_Keywords_Manager {
         return null;
     }
     
+    /**
+     * Get keyword by ID only
+     */
+    public function get_keyword_by_id($id) {
+        $keywords = $this->get_all_keywords();
+        foreach ($keywords as $keyword) {
+            if (isset($keyword['id']) && $keyword['id'] === $id) {
+                return $keyword;
+            }
+        }
+        return null;
+    }
+    
     private function save_keywords($keywords) {
-        return file_put_contents($this->keywords_file, json_encode($keywords, JSON_PRETTY_PRINT));
+        // Ensure the data directory exists
+        $data_dir = dirname($this->keywords_file);
+        if (!file_exists($data_dir)) {
+            if (!mkdir($data_dir, 0755, true)) {
+                $logger = new AIA_Logger();
+                $logger->log("Failed to create data directory: " . $data_dir, 'error');
+                return false;
+            }
+        }
+        
+        // Check if directory is writable
+        if (!is_writable($data_dir)) {
+            $logger = new AIA_Logger();
+            $logger->log("Data directory is not writable: " . $data_dir, 'error');
+            return false;
+        }
+        
+        $result = file_put_contents($this->keywords_file, json_encode($keywords, JSON_PRETTY_PRINT));
+        
+        if ($result === false) {
+            $logger = new AIA_Logger();
+            $logger->log("Failed to write to keywords file: " . $this->keywords_file, 'error');
+            return false;
+        }
+        
+        return $result;
     }
 }

@@ -9,7 +9,7 @@ class AIA_Link_Manager {
     
     private $max_internal_links = 5;
     private $max_external_links = 3;
-    private $links_file;
+    public $links_file;
     
     public function __construct() {
         $this->links_file = AIA_DATA_DIR . 'external_links.json';
@@ -17,6 +17,103 @@ class AIA_Link_Manager {
         
         // Load settings from database
         $this->load_settings();
+        
+        // Check if sitemap sync is needed (on every page load)
+        $this->check_sitemap_sync();
+    }
+    
+    /**
+     * Check if sitemap sync is needed - syncs ONE sitemap per visit
+     */
+    private function check_sitemap_sync() {
+        $link_data = $this->get_links_data();
+        
+        // If no sitemap URLs, skip
+        if (empty($link_data['sitemap_urls'])) {
+            return;
+        }
+        
+        // Get the next sitemap index to sync
+        $next_index = get_transient('aia_next_sitemap_index');
+        if ($next_index === false) {
+            $next_index = 0;
+        }
+        
+        $sitemap_urls = $link_data['sitemap_urls'];
+        $total_sitemaps = count($sitemap_urls);
+        
+        // Make sure index is valid (in case sitemaps were removed)
+        if ($next_index >= $total_sitemaps) {
+            $next_index = 0;
+        }
+        
+        // Get the sitemap URL for this visit
+        $sitemap_index = $next_index % $total_sitemaps;
+        $sitemap_url = $sitemap_urls[$sitemap_index];
+        
+        // Check when this specific sitemap was last synced
+        $last_sync_key = 'aia_sitemap_sync_' . md5($sitemap_url);
+        $last_sync = get_transient($last_sync_key);
+        
+        // Only sync if more than 24 hours have passed for this sitemap
+        if ($last_sync === false) {
+            // Sync this sitemap
+            $result = $this->sync_single_sitemap($sitemap_url);
+            
+            if ($result !== false) {
+                // Set transient for this sitemap (24 hours)
+                set_transient($last_sync_key, time(), 24 * HOUR_IN_SECONDS);
+                
+                // Log the sync
+                $logger = new AIA_Logger();
+                $logger->log("Sitemap auto-sync: Synced sitemap {$sitemap_index}/{$total_sitemaps}: " . $sitemap_url . " - Found {$result} links", 'info');
+            } else {
+                // If sync failed, don't set the transient - try again on next visit
+                $logger = new AIA_Logger();
+                $logger->log("Sitemap auto-sync: Failed to sync sitemap: " . $sitemap_url, 'error');
+            }
+        }
+        
+        // Move to next sitemap for the next visit
+        set_transient('aia_next_sitemap_index', ($next_index + 1) % $total_sitemaps, 30 * DAY_IN_SECONDS);
+    }
+    
+    /**
+     * Sync a single sitemap URL - REPLACES all links from this sitemap
+     */
+    public function sync_single_sitemap($sitemap_url) {
+        $link_data = $this->get_links_data();
+        
+        // Get the host of this sitemap to identify its links
+        $sitemap_host = parse_url($sitemap_url, PHP_URL_HOST);
+        
+        // REMOVE ALL existing links from this sitemap (by host)
+        $existing_cache = $link_data['sitemap_cache'] ?? [];
+        $filtered_cache = array_filter($existing_cache, function($link) use ($sitemap_host) {
+            $link_host = parse_url($link['url'], PHP_URL_HOST);
+            return ($link_host !== $sitemap_host);
+        });
+        
+        // Fetch new links from this sitemap
+        $new_links = $this->fetch_sitemap_links($sitemap_url);
+        
+        if (!empty($new_links)) {
+            // Merge with filtered cache (other sitemaps' links)
+            $link_data['sitemap_cache'] = array_merge(array_values($filtered_cache), $new_links);
+            $link_count = count($new_links);
+        } else {
+            // If no new links found, keep filtered cache
+            $link_data['sitemap_cache'] = array_values($filtered_cache);
+            $link_count = 0;
+        }
+        
+        // Update last sync time
+        $link_data['last_sitemap_update'] = current_time('mysql');
+        
+        // Save
+        $result = file_put_contents($this->links_file, json_encode($link_data, JSON_PRETTY_PRINT));
+        
+        return ($result !== false) ? $link_count : false;
     }
     
     /**
@@ -36,7 +133,6 @@ class AIA_Link_Manager {
     private function ensure_links_file_exists() {
         if (!file_exists($this->links_file)) {
             $default = [
-                'direct_links' => [],
                 'sitemap_urls' => [],
                 'sitemap_cache' => [],
                 'last_sitemap_update' => null
@@ -281,43 +377,60 @@ class AIA_Link_Manager {
     }
     
     /**
-     * Get external links from all sources
+     * Get external links from sitemap only - NO topic_keywords needed
      */
     public function get_external_links_for_keyword($keyword) {
         $links = [];
         $link_data = $this->get_links_data();
         
-        // 1. Check direct links with keyword matching
-        if (!empty($link_data['direct_links'])) {
-            foreach ($link_data['direct_links'] as $direct_link) {
-                if ($this->link_matches_keyword($direct_link, $keyword)) {
-                    $links[] = [
-                        'url' => $direct_link['url'],
-                        'anchor' => $direct_link['anchor'],
-                        'source' => 'direct',
-                        'relevance' => $direct_link['relevance'] ?? 2
-                    ];
-                }
-            }
-        }
-        
-        // 2. Check sitemap cache for relevant links
+        // Check sitemap cache for relevant links - match by keyword in URL or anchor
         if (!empty($link_data['sitemap_cache'])) {
+            $keyword_lower = strtolower($keyword);
+            $keyword_terms = explode(' ', $keyword_lower);
+            $keyword_terms = array_filter($keyword_terms, function($term) {
+                return strlen($term) > 2;
+            });
+            
             foreach ($link_data['sitemap_cache'] as $sitemap_link) {
-                if ($this->link_matches_keyword($sitemap_link, $keyword)) {
+                // Check if keyword appears in URL or anchor text
+                $url_lower = strtolower($sitemap_link['url']);
+                $anchor_lower = strtolower($sitemap_link['anchor']);
+                
+                $relevance = 0;
+                
+                // Check for full keyword match in URL or anchor
+                if (strpos($url_lower, $keyword_lower) !== false) {
+                    $relevance += 5;
+                }
+                if (strpos($anchor_lower, $keyword_lower) !== false) {
+                    $relevance += 5;
+                }
+                
+                // Check for individual terms
+                foreach ($keyword_terms as $term) {
+                    if (strpos($url_lower, $term) !== false) {
+                        $relevance += 2;
+                    }
+                    if (strpos($anchor_lower, $term) !== false) {
+                        $relevance += 2;
+                    }
+                }
+                
+                // Only include if relevance > 0
+                if ($relevance > 0) {
                     $links[] = [
                         'url' => $sitemap_link['url'],
-                        'anchor' => $sitemap_link['anchor'] ?? $this->extract_anchor_from_url($sitemap_link['url']),
+                        'anchor' => $sitemap_link['anchor'],
                         'source' => 'sitemap',
-                        'relevance' => $sitemap_link['relevance'] ?? 1
+                        'relevance' => $relevance
                     ];
                 }
             }
         }
         
-        // Sort by relevance
+        // Sort by relevance (highest first)
         usort($links, function($a, $b) {
-            return ($b['relevance'] ?? 0) - ($a['relevance'] ?? 0);
+            return $b['relevance'] - $a['relevance'];
         });
         
         // Remove duplicates by URL
@@ -331,45 +444,6 @@ class AIA_Link_Manager {
         }
         
         return array_slice($unique_links, 0, $this->max_external_links);
-    }
-    
-    /**
-     * Check if a link matches the keyword
-     */
-    private function link_matches_keyword($link, $keyword) {
-        if (empty($link['topic_keywords'])) {
-            return false;
-        }
-        
-        $keyword_lower = strtolower($keyword);
-        $keyword_terms = explode(' ', $keyword_lower);
-        $keyword_terms = array_filter($keyword_terms, function($term) {
-            return strlen($term) > 2;
-        });
-        
-        foreach ($link['topic_keywords'] as $topic_keyword) {
-            $topic_lower = strtolower($topic_keyword);
-            
-            // Exact match
-            if ($topic_lower === $keyword_lower) {
-                return true;
-            }
-            
-            // Partial match (topic contains keyword or keyword contains topic)
-            if (strpos($topic_lower, $keyword_lower) !== false || 
-                strpos($keyword_lower, $topic_lower) !== false) {
-                return true;
-            }
-            
-            // Check individual terms
-            foreach ($keyword_terms as $term) {
-                if (strpos($topic_lower, $term) !== false) {
-                    return true;
-                }
-            }
-        }
-        
-        return false;
     }
     
     /**
@@ -474,12 +548,16 @@ class AIA_Link_Manager {
     // ==================== SITEMAP MANAGEMENT ====================
     
     /**
-     * Update sitemap cache
+     * Update ALL sitemap caches (manual/forced sync) - REPLACES all links
      */
     public function update_sitemap_cache() {
         $link_data = $this->get_links_data();
         $sitemap_urls = $link_data['sitemap_urls'] ?? [];
         $all_links = [];
+        
+        if (empty($sitemap_urls)) {
+            return 0;
+        }
         
         foreach ($sitemap_urls as $sitemap_url) {
             $links = $this->fetch_sitemap_links($sitemap_url);
@@ -488,21 +566,33 @@ class AIA_Link_Manager {
             }
         }
         
-        $link_data['sitemap_cache'] = $all_links;
+        // Remove duplicates by URL
+        $unique_links = [];
+        $seen_urls = [];
+        foreach ($all_links as $link) {
+            if (!in_array($link['url'], $seen_urls)) {
+                $unique_links[] = $link;
+                $seen_urls[] = $link['url'];
+            }
+        }
+        
+        $link_data['sitemap_cache'] = $unique_links;
         $link_data['last_sitemap_update'] = current_time('mysql');
         
         file_put_contents($this->links_file, json_encode($link_data, JSON_PRETTY_PRINT));
-        return count($all_links);
+        return count($unique_links);
     }
     
     /**
-     * Fetch links from a sitemap
+     * Fetch links from a sitemap - NO topic_keywords
      */
-    private function fetch_sitemap_links($sitemap_url) {
+    public function fetch_sitemap_links($sitemap_url) {
         $links = [];
         
         // Validate URL
         if (!filter_var($sitemap_url, FILTER_VALIDATE_URL)) {
+            $logger = new AIA_Logger();
+            $logger->log("Invalid sitemap URL: {$sitemap_url}", 'error');
             return $links;
         }
         
@@ -511,7 +601,14 @@ class AIA_Link_Manager {
         
         if (is_wp_error($response)) {
             $logger = new AIA_Logger();
-            $logger->log("Failed to fetch sitemap: {$sitemap_url}", 'error');
+            $logger->log("Failed to fetch sitemap: {$sitemap_url} - " . $response->get_error_message(), 'error');
+            return $links;
+        }
+        
+        $status_code = wp_remote_retrieve_response_code($response);
+        if ($status_code !== 200) {
+            $logger = new AIA_Logger();
+            $logger->log("Sitemap returned status {$status_code}: {$sitemap_url}", 'error');
             return $links;
         }
         
@@ -536,6 +633,7 @@ class AIA_Link_Manager {
         
         // Handle URL set
         if (isset($xml->url)) {
+            $count = 0;
             foreach ($xml->url as $url) {
                 $loc = (string)$url->loc;
                 $lastmod = (string)$url->lastmod;
@@ -543,89 +641,24 @@ class AIA_Link_Manager {
                 // Extract anchor from URL
                 $anchor = $this->extract_anchor_from_url($loc);
                 
-                // Extract topic keywords from URL path
-                $topic_keywords = $this->extract_keywords_from_url($loc);
-                
+                // Store without topic_keywords
                 $links[] = [
                     'url' => $loc,
                     'anchor' => $anchor,
-                    'topic_keywords' => $topic_keywords,
                     'lastmod' => $lastmod,
                     'source' => 'sitemap'
                 ];
+                $count++;
             }
+            
+            $logger = new AIA_Logger();
+            $logger->log("Fetched {$count} links from sitemap: {$sitemap_url}", 'info');
+        } else {
+            $logger = new AIA_Logger();
+            $logger->log("No <url> tags found in sitemap: {$sitemap_url}", 'warning');
         }
         
         return $links;
-    }
-    
-    /**
-     * Extract keywords from URL
-     */
-    private function extract_keywords_from_url($url) {
-        $path = parse_url($url, PHP_URL_PATH);
-        $keywords = [];
-        
-        if ($path) {
-            $segments = explode('/', trim($path, '/'));
-            foreach ($segments as $segment) {
-                // Replace hyphens and underscores with spaces
-                $cleaned = str_replace(['-', '_'], ' ', $segment);
-                // Remove file extensions
-                $cleaned = preg_replace('/\.[^.]+$/', '', $cleaned);
-                // Split into words
-                $words = explode(' ', $cleaned);
-                foreach ($words as $word) {
-                    if (strlen($word) > 3) {
-                        $keywords[] = strtolower($word);
-                    }
-                }
-            }
-        }
-        
-        return array_unique($keywords);
-    }
-    
-    // ==================== DIRECT LINK MANAGEMENT ====================
-    
-    /**
-     * Add a direct external link
-     */
-    public function add_direct_link($url, $anchor, $topic_keywords = []) {
-        $link_data = $this->get_links_data();
-        
-        // Check if URL already exists
-        foreach ($link_data['direct_links'] as $link) {
-            if ($link['url'] === $url) {
-                return false;
-            }
-        }
-        
-        $link_data['direct_links'][] = [
-            'url' => $url,
-            'anchor' => $anchor,
-            'topic_keywords' => $topic_keywords,
-            'added_at' => current_time('mysql')
-        ];
-        
-        return file_put_contents($this->links_file, json_encode($link_data, JSON_PRETTY_PRINT));
-    }
-    
-    /**
-     * Remove a direct link
-     */
-    public function remove_direct_link($url) {
-        $link_data = $this->get_links_data();
-        
-        foreach ($link_data['direct_links'] as $index => $link) {
-            if ($link['url'] === $url) {
-                unset($link_data['direct_links'][$index]);
-                $link_data['direct_links'] = array_values($link_data['direct_links']);
-                return file_put_contents($this->links_file, json_encode($link_data, JSON_PRETTY_PRINT));
-            }
-        }
-        
-        return false;
     }
     
     // ==================== SITEMAP URL MANAGEMENT ====================
@@ -641,11 +674,22 @@ class AIA_Link_Manager {
         }
         
         $link_data['sitemap_urls'][] = $sitemap_url;
-        return file_put_contents($this->links_file, json_encode($link_data, JSON_PRETTY_PRINT));
+        
+        // Save the updated list
+        $result = file_put_contents($this->links_file, json_encode($link_data, JSON_PRETTY_PRINT));
+        
+        if ($result !== false) {
+            // Reset the sitemap index counter so the new sitemap gets synced
+            delete_transient('aia_next_sitemap_index');
+            // Also delete the sync transient for this sitemap so it syncs immediately
+            delete_transient('aia_sitemap_sync_' . md5($sitemap_url));
+        }
+        
+        return $result;
     }
     
     /**
-     * Remove a sitemap URL
+     * Remove a sitemap URL - REMOVES ALL links from this sitemap
      */
     public function remove_sitemap_url($sitemap_url) {
         $link_data = $this->get_links_data();
@@ -654,6 +698,21 @@ class AIA_Link_Manager {
             if ($url === $sitemap_url) {
                 unset($link_data['sitemap_urls'][$index]);
                 $link_data['sitemap_urls'] = array_values($link_data['sitemap_urls']);
+                
+                // Remove ALL related cache entries (by host)
+                $sitemap_host = parse_url($sitemap_url, PHP_URL_HOST);
+                
+                $link_data['sitemap_cache'] = array_filter($link_data['sitemap_cache'] ?? [], function($link) use ($sitemap_host) {
+                    $link_host = parse_url($link['url'], PHP_URL_HOST);
+                    return ($link_host !== $sitemap_host);
+                });
+                
+                // Reindex the cache array
+                $link_data['sitemap_cache'] = array_values($link_data['sitemap_cache']);
+                
+                // Delete transients for this sitemap
+                delete_transient('aia_sitemap_sync_' . md5($sitemap_url));
+                
                 return file_put_contents($this->links_file, json_encode($link_data, JSON_PRETTY_PRINT));
             }
         }

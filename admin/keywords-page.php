@@ -12,8 +12,6 @@ class AIA_Keywords_Page {
     private $items_per_page = 20;
     
     public function __construct() {
-        // These classes are already loaded by class-plugin-init.php
-        // Just instantiate them, don't redeclare
         $this->keywords_manager = new AIA_Keywords_Manager();
         $this->authors_manager = new AIA_Author_Style();
         add_action('admin_menu', array($this, 'add_submenu_page'));
@@ -193,7 +191,7 @@ class AIA_Keywords_Page {
                             </thead>
                             <tbody>
                                 <?php $counter = $offset + 1; ?>
-                                <?php foreach ($keywords as $index => $keyword): 
+                                <?php foreach ($keywords as $keyword): 
                                     $author = $this->authors_manager->get_author_by_id($keyword['author_id']);
                                     $author_name = $author ? $author['name'] : 'Unknown';
                                     
@@ -211,7 +209,7 @@ class AIA_Keywords_Page {
                                 ?>
                                     <tr>
                                         <td>
-                                            <input type="checkbox" name="delete_indices[]" value="<?php echo $index; ?>" class="keyword-checkbox" onchange="updateSelectedCount();">
+                                            <input type="checkbox" name="delete_ids[]" value="<?php echo esc_attr($keyword['id']); ?>" class="keyword-checkbox" onchange="updateSelectedCount();">
                                         </td>
                                         <td><?php echo $counter++; ?></td>
                                         <td><strong><?php echo esc_html($keyword['keyword']); ?></strong></td>
@@ -238,7 +236,7 @@ class AIA_Keywords_Page {
                                         <td><?php echo esc_html($keyword['created_at']); ?></td>
                                         <td>
                                             <form method="post" style="display:inline;">
-                                                <input type="hidden" name="delete_index" value="<?php echo $index; ?>">
+                                                <input type="hidden" name="delete_id" value="<?php echo esc_attr($keyword['id']); ?>">
                                                 <button type="submit" name="aia_delete_keyword" class="button button-small delete" onclick="return confirm('Delete this keyword?');">
                                                     Delete
                                                 </button>
@@ -715,47 +713,33 @@ class AIA_Keywords_Page {
     }
     
     private function handle_delete_keyword() {
-        if (isset($_POST['delete_index'])) {
-            $index = intval($_POST['delete_index']);
-            if ($this->keywords_manager->delete_keyword($index)) {
+        if (isset($_POST['delete_id'])) {
+            $keyword_id = sanitize_text_field($_POST['delete_id']);
+            
+            if ($this->keywords_manager->delete_keyword($keyword_id)) {
                 echo '<div class="notice notice-success"><p>Keyword deleted successfully!</p></div>';
             } else {
-                echo '<div class="notice notice-error"><p>Failed to delete keyword.</p></div>';
+                echo '<div class="notice notice-error"><p>Failed to delete keyword. Please check file permissions.</p></div>';
             }
         }
     }
     
     private function handle_bulk_delete() {
-        if (!isset($_POST['delete_indices']) || !is_array($_POST['delete_indices'])) {
+        if (!isset($_POST['delete_ids']) || !is_array($_POST['delete_ids'])) {
             echo '<div class="notice notice-error"><p>No keywords selected for deletion.</p></div>';
             return;
         }
         
-        // Get all keywords first
-        $all_keywords = $this->keywords_manager->get_all_keywords();
-        $indices = array_map('intval', $_POST['delete_indices']);
-        
-        // Sort indices in descending order to delete from the end first
-        rsort($indices);
+        $ids = array_map('sanitize_text_field', $_POST['delete_ids']);
         
         $deleted = 0;
         $failed = 0;
-        $failed_indices = array();
         
-        foreach ($indices as $index) {
-            // Check if the index still exists in the current array
-            if (isset($all_keywords[$index])) {
-                if ($this->keywords_manager->delete_keyword($index)) {
-                    $deleted++;
-                    // Remove from the local copy to keep it in sync
-                    unset($all_keywords[$index]);
-                } else {
-                    $failed++;
-                    $failed_indices[] = $index;
-                }
+        foreach ($ids as $keyword_id) {
+            if ($this->keywords_manager->delete_keyword($keyword_id)) {
+                $deleted++;
             } else {
                 $failed++;
-                $failed_indices[] = $index;
             }
         }
         
@@ -764,7 +748,7 @@ class AIA_Keywords_Page {
         } elseif ($deleted > 0 && $failed > 0) {
             echo '<div class="notice notice-warning"><p>Deleted ' . $deleted . ' keyword(s). Failed to delete ' . $failed . ' keyword(s).</p></div>';
         } else {
-            echo '<div class="notice notice-error"><p>Failed to delete keywords. The indices may no longer exist.</p></div>';
+            echo '<div class="notice notice-error"><p>Failed to delete keywords.</p></div>';
         }
     }
 }
