@@ -1,50 +1,175 @@
 {
     "sitemap_urls": [
-        "https:\/\/aryzohn.com\/post-sitemap.xml"
+        {
+            "url": "https:\/\/aryzohn.com\/post-sitemap.xml",
+            "sitemap_id": "76c351526dbb2f4293399011c0158a28",
+            "last_sync": "2026-08-03 06:37:57",
+            "links_count": 20,
+            "hidden": true
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/page-sitemap.xml",
+            "sitemap_id": "cc2525e84c78498daf4fa9ae80282793",
+            "last_sync": "2026-08-03 06:37:57",
+            "links_count": 20,
+            "hidden": true
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/category-sitemap.xml",
+            "sitemap_id": "0cac6dcd96870857039a3ebda9c49df5",
+            "last_sync": "2026-08-03 06:37:57",
+            "links_count": 20,
+            "hidden": false
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/author-sitemap.xml",
+            "sitemap_id": "cfdea583e3c1fb769e909e18b8bb0f87",
+            "last_sync": "2026-08-03 06:37:57",
+            "links_count": 20,
+            "hidden": false
+        }
     ],
     "sitemap_cache": [
         {
             "url": "https:\/\/aryzohn.com\/blog\/",
             "anchor": "Blog",
             "lastmod": "2026-07-01T11:57:49+00:00",
-            "source": "sitemap"
+            "source": "sitemap",
+            "sitemap_source": "76c351526dbb2f4293399011c0158a28"
         },
         {
             "url": "https:\/\/aryzohn.com\/how-to-get-your-website-on-google-search-first-page\/",
             "anchor": "How To Get Your Website On Google Search First Page",
             "lastmod": "2026-06-09T10:54:47+00:00",
-            "source": "sitemap"
+            "source": "sitemap",
+            "sitemap_source": "76c351526dbb2f4293399011c0158a28"
         },
         {
             "url": "https:\/\/aryzohn.com\/do-google-reviews-help-seo-the-surprising-impact-most-businesses-overlook\/",
             "anchor": "Do Google Reviews Help Seo The Surprising Impact Most Businesses Overlook",
             "lastmod": "2026-06-10T12:30:39+00:00",
-            "source": "sitemap"
+            "source": "sitemap",
+            "sitemap_source": "76c351526dbb2f4293399011c0158a28"
         },
         {
             "url": "https:\/\/aryzohn.com\/what-are-intelligent-software-solutions-and-why-do-businesses-need-them-now\/",
             "anchor": "What Are Intelligent Software Solutions And Why Do Businesses Need Them Now",
             "lastmod": "2026-06-27T12:28:49+00:00",
-            "source": "sitemap"
+            "source": "sitemap",
+            "sitemap_source": "76c351526dbb2f4293399011c0158a28"
         },
         {
             "url": "https:\/\/aryzohn.com\/best-digital-planners-in-2026-which-one-actually-fits-how-you-think\/",
             "anchor": "Best Digital Planners In 2026 Which One Actually Fits How You Think",
             "lastmod": "2026-06-28T11:42:47+00:00",
-            "source": "sitemap"
+            "source": "sitemap",
+            "sitemap_source": "76c351526dbb2f4293399011c0158a28"
         },
         {
             "url": "https:\/\/aryzohn.com\/quick-links-the-small-feature-saving-you-hours\/",
             "anchor": "Quick Links The Small Feature Saving You Hours",
             "lastmod": "2026-06-30T11:49:37+00:00",
-            "source": "sitemap"
+            "source": "sitemap",
+            "sitemap_source": "76c351526dbb2f4293399011c0158a28"
         },
         {
             "url": "https:\/\/aryzohn.com\/signs-your-business-has-outgrown-its-current-tech-setup\/",
             "anchor": "Signs Your Business Has Outgrown Its Current Tech Setup",
             "lastmod": "2026-07-01T11:57:49+00:00",
-            "source": "sitemap"
+            "source": "sitemap",
+            "sitemap_source": "76c351526dbb2f4293399011c0158a28"
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/",
+            "anchor": "Aryzohn Com",
+            "lastmod": "2026-07-18T10:52:37+00:00",
+            "source": "sitemap",
+            "sitemap_source": "cc2525e84c78498daf4fa9ae80282793"
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/about-us\/",
+            "anchor": "About Us",
+            "lastmod": "2026-06-09T11:46:16+00:00",
+            "source": "sitemap",
+            "sitemap_source": "cc2525e84c78498daf4fa9ae80282793"
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/privacy-policy\/",
+            "anchor": "Privacy Policy",
+            "lastmod": "2026-06-09T11:55:36+00:00",
+            "source": "sitemap",
+            "sitemap_source": "cc2525e84c78498daf4fa9ae80282793"
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/guest-posting\/",
+            "anchor": "Guest Posting",
+            "lastmod": "2026-06-23T07:18:29+00:00",
+            "source": "sitemap",
+            "sitemap_source": "cc2525e84c78498daf4fa9ae80282793"
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/web-design-development\/",
+            "anchor": "Web Design Development",
+            "lastmod": "2026-06-28T07:29:44+00:00",
+            "source": "sitemap",
+            "sitemap_source": "cc2525e84c78498daf4fa9ae80282793"
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/ai-automation\/",
+            "anchor": "Ai Automation",
+            "lastmod": "2026-06-28T07:54:03+00:00",
+            "source": "sitemap",
+            "sitemap_source": "cc2525e84c78498daf4fa9ae80282793"
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/__trashed\/",
+            "anchor": "  Trashed",
+            "lastmod": "2026-07-01T07:30:02+00:00",
+            "source": "sitemap",
+            "sitemap_source": "cc2525e84c78498daf4fa9ae80282793"
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/contact\/",
+            "anchor": "Contact",
+            "lastmod": "2026-07-12T17:26:27+00:00",
+            "source": "sitemap",
+            "sitemap_source": "cc2525e84c78498daf4fa9ae80282793"
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/category\/digital-marketing\/",
+            "anchor": "Digital Marketing",
+            "lastmod": "2026-06-10T12:30:39+00:00",
+            "source": "sitemap",
+            "sitemap_source": "0cac6dcd96870857039a3ebda9c49df5"
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/category\/seo\/",
+            "anchor": "Seo",
+            "lastmod": "2026-06-30T11:49:37+00:00",
+            "source": "sitemap",
+            "sitemap_source": "0cac6dcd96870857039a3ebda9c49df5"
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/category\/software\/",
+            "anchor": "Software",
+            "lastmod": "2026-06-28T11:42:47+00:00",
+            "source": "sitemap",
+            "sitemap_source": "0cac6dcd96870857039a3ebda9c49df5"
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/category\/tech\/",
+            "anchor": "Tech",
+            "lastmod": "2026-07-01T11:57:49+00:00",
+            "source": "sitemap",
+            "sitemap_source": "0cac6dcd96870857039a3ebda9c49df5"
+        },
+        {
+            "url": "https:\/\/aryzohn.com\/author\/admin\/",
+            "anchor": "Admin",
+            "lastmod": "2026-06-10T06:39:15+00:00",
+            "source": "sitemap",
+            "sitemap_source": "cfdea583e3c1fb769e909e18b8bb0f87"
         }
     ],
-    "last_sitemap_update": "2026-08-01 07:32:09"
+    "last_sitemap_update": "2026-08-03 06:37:57"
 }

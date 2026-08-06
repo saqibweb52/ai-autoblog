@@ -8,6 +8,7 @@ if (!defined('ABSPATH')) {
 class AIA_Link_Settings {
     
     private $link_manager;
+    private $sync_interval = 7; // 7 days
     
     public function __construct() {
         $this->link_manager = new AIA_Link_Manager();
@@ -155,7 +156,7 @@ class AIA_Link_Settings {
                             <th><label for="sitemap_url">Sitemap URL</label></th>
                             <td>
                                 <input type="url" name="sitemap_url" id="sitemap_url" class="regular-text" placeholder="https://example.com/sitemap.xml">
-                                <p class="description">Only XML sitemaps are supported (WordPress sitemaps work best)</p>
+                                <p class="description">Only XML sitemaps are supported.</p>
                             </td>
                         </tr>
                     </table>
@@ -163,7 +164,11 @@ class AIA_Link_Settings {
                 </form>
                 
                 <h3>Active Sitemaps</h3>
-                <?php if (!empty($link_data['sitemap_urls'])): ?>
+                <?php 
+                // Get only visible sitemaps for display
+                $visible_sitemaps = $this->link_manager->get_visible_sitemaps();
+                if (!empty($visible_sitemaps)): 
+                ?>
                     <table class="wp-list-table widefat fixed striped">
                         <thead>
                             <tr>
@@ -175,37 +180,49 @@ class AIA_Link_Settings {
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($link_data['sitemap_urls'] as $sitemap_url): 
-                                // Get the sitemap host for matching
-                                $sitemap_host = parse_url($sitemap_url, PHP_URL_HOST);
+                            <?php foreach ($visible_sitemaps as $sitemap): 
+                                $sitemap_url = $sitemap['url'];
+                                $sitemap_id = $sitemap['sitemap_id'];
                                 
-                                // FIXED: Get links for this sitemap - match by host only
-                                $sitemap_links = array_filter($link_data['sitemap_cache'] ?? [], function($link) use ($sitemap_host) {
-                                    $link_host = parse_url($link['url'], PHP_URL_HOST);
-                                    return ($link_host === $sitemap_host);
+                                // Get links for this sitemap - match by sitemap_source
+                                $sitemap_links = array_filter($link_data['sitemap_cache'] ?? [], function($link) use ($sitemap_id) {
+                                    return (isset($link['sitemap_source']) && $link['sitemap_source'] === $sitemap_id);
                                 });
                                 
                                 // Reindex the filtered links
                                 $sitemap_links = array_values($sitemap_links);
                                 $link_count = count($sitemap_links);
                                 
-                                // Get last sync time from transient
-                                $last_sync_key = 'aia_sitemap_sync_' . md5($sitemap_url);
-                                $last_sync = get_transient($last_sync_key);
+                                // Get last sync time
+                                $last_sync = isset($sitemap['last_sync']) ? $sitemap['last_sync'] : null;
                                 
-                                // Get sync status
-                                if ($last_sync !== false) {
-                                    $last_sync_date = date_i18n('Y-m-d H:i:s', $last_sync);
-                                    $status = '<span class="aia-status aia-status-done">Synced</span>';
+                                // Check if sync is needed
+                                $needs_sync = false;
+                                if ($last_sync === null) {
+                                    $needs_sync = true;
+                                    $last_sync_date = 'Never';
                                 } else {
-                                    // Check if we have links but no sync transient
-                                    if ($link_count > 0) {
-                                        $last_sync_date = 'Unknown (has links)';
-                                        $status = '<span class="aia-status aia-status-done">Cached</span>';
-                                    } else {
-                                        $last_sync_date = 'Never';
-                                        $status = '<span class="aia-status aia-status-pending">Pending</span>';
+                                    $last_sync_date = $last_sync;
+                                    $last_sync_datetime = new DateTime($last_sync);
+                                    $current_date = new DateTime();
+                                    $diff = $last_sync_datetime->diff($current_date);
+                                    $days_since_sync = $diff->days;
+                                    
+                                    if ($days_since_sync >= $this->sync_interval) {
+                                        $needs_sync = true;
                                     }
+                                }
+                                
+                                $status_class = $needs_sync ? 'aia-status-pending' : 'aia-status-done';
+                                $status_text = $needs_sync ? 'Needs Sync' : 'Synced';
+                                
+                                // Calculate next sync date
+                                if ($last_sync !== null) {
+                                    $next_sync_datetime = new DateTime($last_sync);
+                                    $next_sync_datetime->modify('+' . $this->sync_interval . ' days');
+                                    $next_sync_date = $next_sync_datetime->format('Y-m-d H:i:s');
+                                } else {
+                                    $next_sync_date = 'Not scheduled';
                                 }
                             ?>
                                 <tr>
@@ -214,10 +231,18 @@ class AIA_Link_Settings {
                                             <?php echo esc_html($sitemap_url); ?>
                                         </a>
                                     </td>
-                                    <td><?php echo $status; ?></td>
+                                    <td>
+                                        <span class="aia-status <?php echo $status_class; ?>">
+                                            <?php echo $status_text; ?>
+                                        </span>
+                                        <?php if ($last_sync !== null): ?>
+                                            <br><small>Next sync: <?php echo $next_sync_date; ?></small>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <button type="button" class="button button-small aia-view-links" 
                                                 data-sitemap="<?php echo esc_attr($sitemap_url); ?>"
+                                                data-sitemap-id="<?php echo esc_attr($sitemap_id); ?>"
                                                 data-count="<?php echo $link_count; ?>">
                                             <?php echo $link_count; ?> links
                                         </button>
@@ -230,7 +255,9 @@ class AIA_Link_Settings {
                                                 Remove
                                             </button>
                                         </form>
-                                        <button type="button" class="button button-small aia-sync-single" data-sitemap="<?php echo esc_attr($sitemap_url); ?>">
+                                        <button type="button" class="button button-small aia-sync-single" 
+                                                data-sitemap="<?php echo esc_attr($sitemap_url); ?>"
+                                                data-sitemap-id="<?php echo esc_attr($sitemap_id); ?>">
                                             Sync Now
                                         </button>
                                     </td>
@@ -239,7 +266,8 @@ class AIA_Link_Settings {
                         </tbody>
                     </table>
                 <?php else: ?>
-                    <p>No sitemaps added. Add a sitemap URL above.</p>
+                    <p>No visible sitemaps added. Add a sitemap URL above.</p>
+                    <p class="description">Note: Some sitemaps may be hidden from this list but are still being used for linking.</p>
                 <?php endif; ?>
                 
                 <div class="aia-sync-actions" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px;">
@@ -251,7 +279,7 @@ class AIA_Link_Settings {
                     <span class="description" style="margin-left: 10px;">
                         Last full sync: <?php echo !empty($link_data['last_sitemap_update']) ? esc_html($link_data['last_sitemap_update']) : 'Never'; ?>
                     </span>
-                    <p class="description" style="margin-top: 5px;">Sitemaps are automatically synced one per visit (rotating through all sitemaps).</p>
+                    <p class="description" style="margin-top: 5px;">Sitemaps are automatically synced one per visit (rotating through all sitemaps). Each sitemap syncs every 7 days.</p>
                 </div>
             </div>
         </div>
@@ -505,6 +533,7 @@ class AIA_Link_Settings {
             // ========== VIEW LINKS ==========
             $('.aia-view-links').on('click', function() {
                 var sitemapUrl = $(this).data('sitemap');
+                var sitemapId = $(this).data('sitemap-id');
                 var linkCount = $(this).data('count');
                 
                 $('#aia-modal-sitemap-url').text(sitemapUrl);
@@ -521,6 +550,7 @@ class AIA_Link_Settings {
                     data: {
                         action: 'aia_get_sitemap_links',
                         sitemap: sitemapUrl,
+                        sitemap_id: sitemapId,
                         nonce: ajaxNonce
                     },
                     success: function(response) {
@@ -717,6 +747,7 @@ class AIA_Link_Settings {
             // ========== SYNC SINGLE SITEMAP ==========
             $('.aia-sync-single').on('click', function() {
                 var sitemapUrl = $(this).data('sitemap');
+                var sitemapId = $(this).data('sitemap-id');
                 var btn = $(this);
                 
                 btn.prop('disabled', true).text('Syncing...');
@@ -727,6 +758,7 @@ class AIA_Link_Settings {
                     data: {
                         action: 'aia_sync_sitemap',
                         sitemap: sitemapUrl,
+                        sitemap_id: sitemapId,
                         nonce: ajaxNonce
                     },
                     success: function(response) {
@@ -835,36 +867,17 @@ class AIA_Link_Settings {
         }
         
         $sitemap_url = isset($_POST['sitemap']) ? sanitize_url($_POST['sitemap']) : '';
+        $sitemap_id = isset($_POST['sitemap_id']) ? sanitize_text_field($_POST['sitemap_id']) : null;
         
         if (empty($sitemap_url)) {
             wp_send_json_error(['message' => 'No sitemap URL specified']);
         }
         
         // Sync just this sitemap
-        $link_data = $this->link_manager->get_links_data();
-        $links = $this->link_manager->fetch_sitemap_links($sitemap_url);
-        $link_count = count($links);
+        $result = $this->link_manager->sync_single_sitemap($sitemap_url, $sitemap_id);
         
-        if ($link_count > 0) {
-            // Remove old links from this sitemap - match by host only
-            $sitemap_host = parse_url($sitemap_url, PHP_URL_HOST);
-            
-            $existing_cache = $link_data['sitemap_cache'] ?? [];
-            $filtered_cache = array_filter($existing_cache, function($link) use ($sitemap_host) {
-                $link_host = parse_url($link['url'], PHP_URL_HOST);
-                return ($link_host !== $sitemap_host);
-            });
-            
-            $link_data['sitemap_cache'] = array_merge(array_values($filtered_cache), $links);
-            $link_data['last_sitemap_update'] = current_time('mysql');
-            
-            file_put_contents($this->link_manager->links_file, json_encode($link_data, JSON_PRETTY_PRINT));
-            
-            // Update the transient
-            $last_sync_key = 'aia_sitemap_sync_' . md5($sitemap_url);
-            set_transient($last_sync_key, time(), 24 * HOUR_IN_SECONDS);
-            
-            wp_send_json_success(['message' => "Synced {$link_count} links from sitemap."]);
+        if ($result !== false) {
+            wp_send_json_success(['message' => "Synced {$result} links from sitemap."]);
         } else {
             wp_send_json_error(['message' => 'No links found in sitemap or failed to fetch.']);
         }
@@ -880,25 +893,34 @@ class AIA_Link_Settings {
         }
         
         $sitemap_url = isset($_POST['sitemap']) ? sanitize_url($_POST['sitemap']) : '';
+        $sitemap_id = isset($_POST['sitemap_id']) ? sanitize_text_field($_POST['sitemap_id']) : null;
         
         if (empty($sitemap_url)) {
             wp_send_json_error(['message' => 'No sitemap URL specified']);
         }
         
         $link_data = $this->link_manager->get_links_data();
-        $sitemap_host = parse_url($sitemap_url, PHP_URL_HOST);
         
-        // Match by host only
-        $links = array_filter($link_data['sitemap_cache'] ?? [], function($link) use ($sitemap_host) {
-            $link_host = parse_url($link['url'], PHP_URL_HOST);
-            return ($link_host === $sitemap_host);
+        // Find the sitemap_id if not provided
+        if ($sitemap_id === null) {
+            foreach ($link_data['sitemap_urls'] as $sitemap) {
+                if ($sitemap['url'] === $sitemap_url) {
+                    $sitemap_id = $sitemap['sitemap_id'];
+                    break;
+                }
+            }
+        }
+        
+        // Filter links by sitemap_source
+        $sitemap_links = array_filter($link_data['sitemap_cache'] ?? [], function($link) use ($sitemap_id) {
+            return (isset($link['sitemap_source']) && $link['sitemap_source'] === $sitemap_id);
         });
         
         // Add sitemap info to each link
         $links_with_sitemap = array_map(function($link) use ($sitemap_url) {
             $link['sitemap'] = $sitemap_url;
             return $link;
-        }, array_values($links));
+        }, array_values($sitemap_links));
         
         wp_send_json_success(['links' => $links_with_sitemap]);
     }
@@ -924,19 +946,27 @@ class AIA_Link_Settings {
         
         $link_data = $this->link_manager->get_links_data();
         $found = false;
-        $sitemap_host = parse_url($sitemap_url, PHP_URL_HOST);
+        
+        // Find the sitemap_id for this sitemap
+        $sitemap_id = null;
+        foreach ($link_data['sitemap_urls'] as $sitemap) {
+            if ($sitemap['url'] === $sitemap_url) {
+                $sitemap_id = $sitemap['sitemap_id'];
+                break;
+            }
+        }
+        
+        if ($sitemap_id === null) {
+            wp_send_json_error(['message' => 'Sitemap not found']);
+        }
         
         foreach ($link_data['sitemap_cache'] as &$link) {
-            if ($link['url'] === $original_url) {
-                // Check if the link belongs to this sitemap (match by host)
-                $link_host = parse_url($link['url'], PHP_URL_HOST);
-                if ($link_host === $sitemap_host) {
-                    $link['url'] = $new_url;
-                    $link['anchor'] = $new_anchor;
-                    $link['topic_keywords'] = $topic_keywords;
-                    $found = true;
-                    break;
-                }
+            if ($link['url'] === $original_url && isset($link['sitemap_source']) && $link['sitemap_source'] === $sitemap_id) {
+                $link['url'] = $new_url;
+                $link['anchor'] = $new_anchor;
+                $link['topic_keywords'] = $topic_keywords;
+                $found = true;
+                break;
             }
         }
         
@@ -966,17 +996,25 @@ class AIA_Link_Settings {
         
         $link_data = $this->link_manager->get_links_data();
         $found = false;
-        $sitemap_host = parse_url($sitemap_url, PHP_URL_HOST);
+        
+        // Find the sitemap_id for this sitemap
+        $sitemap_id = null;
+        foreach ($link_data['sitemap_urls'] as $sitemap) {
+            if ($sitemap['url'] === $sitemap_url) {
+                $sitemap_id = $sitemap['sitemap_id'];
+                break;
+            }
+        }
+        
+        if ($sitemap_id === null) {
+            wp_send_json_error(['message' => 'Sitemap not found']);
+        }
         
         foreach ($link_data['sitemap_cache'] as $index => $link) {
-            if ($link['url'] === $url) {
-                // Check if the link belongs to this sitemap (match by host)
-                $link_host = parse_url($link['url'], PHP_URL_HOST);
-                if ($link_host === $sitemap_host) {
-                    unset($link_data['sitemap_cache'][$index]);
-                    $found = true;
-                    break;
-                }
+            if ($link['url'] === $url && isset($link['sitemap_source']) && $link['sitemap_source'] === $sitemap_id) {
+                unset($link_data['sitemap_cache'][$index]);
+                $found = true;
+                break;
             }
         }
         
@@ -993,8 +1031,10 @@ class AIA_Link_Settings {
         $link_manager = new AIA_Link_Manager();
         $count = $link_manager->update_sitemap_cache();
         
-        $logger = new AIA_Logger();
-        $logger->log("Daily sitemap sync completed. {$count} links discovered.", 'info');
+        if (class_exists('AIA_Logger')) {
+            $logger = new AIA_Logger();
+            $logger->log("Daily sitemap sync completed. {$count} links discovered.", 'info');
+        }
     }
     
     private function get_total_content_count() {
