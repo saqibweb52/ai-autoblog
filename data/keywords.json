@@ -162,5 +162,28 @@
         ],
         "status": "done",
         "created_at": "2026-07-29 10:57:04"
+    },
+    {
+        "id": "kw_6a742fda1d5149.26946442",
+        "keyword": "AI lead generation",
+        "author_id": 3,
+        "categories": [
+            33,
+            7,
+            8
+        ],
+        "status": "done",
+        "created_at": "2026-08-06 06:55:22"
+    },
+    {
+        "id": "kw_6a744a69d33049.25907318",
+        "keyword": "Free AI tools",
+        "author_id": 3,
+        "categories": [
+            33,
+            8
+        ],
+        "status": "done",
+        "created_at": "2026-08-06 08:48:41"
     }
 ]

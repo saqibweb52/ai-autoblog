@@ -11,6 +11,7 @@ class AIA_AI_Settings {
         add_action('admin_menu', array($this, 'add_submenu_page'));
         add_action('admin_init', array($this, 'register_settings'));
         add_action('wp_ajax_aia_test_api', array($this, 'test_api_connection'));
+        add_action('wp_ajax_aia_test_tavily', array($this, 'test_tavily_connection'));
         add_action('wp_ajax_aia_save_txt', array($this, 'save_txt_file'));
         add_action('wp_ajax_aia_load_txt', array($this, 'load_txt_file'));
     }
@@ -38,6 +39,11 @@ class AIA_AI_Settings {
         register_setting('aia_ai_settings', 'aia_glm_api_key');
         register_setting('aia_ai_settings', 'aia_glm_model');
         
+        // Tavily Settings
+        register_setting('aia_ai_settings', 'aia_tavily_api_key');
+        register_setting('aia_ai_settings', 'aia_tavily_search_depth');
+        register_setting('aia_ai_settings', 'aia_tavily_max_results');
+        
         // General Settings
         register_setting('aia_ai_settings', 'aia_max_posts_per_day');
         register_setting('aia_ai_settings', 'aia_enable_logging');
@@ -54,6 +60,11 @@ class AIA_AI_Settings {
         // GLM
         $glm_api_key = get_option('aia_glm_api_key', '');
         $glm_model = get_option('aia_glm_model', 'glm-4-flash');
+        
+        // Tavily
+        $tavily_api_key = get_option('aia_tavily_api_key', '');
+        $tavily_search_depth = get_option('aia_tavily_search_depth', 'basic');
+        $tavily_max_results = get_option('aia_tavily_max_results', 5);
         
         $max_posts = get_option('aia_max_posts_per_day', 10);
         $logging = get_option('aia_enable_logging', 1);
@@ -234,6 +245,72 @@ class AIA_AI_Settings {
                     </table>
                 </div>
                 
+                <!-- ============ TAVILY SETTINGS ============ -->
+                <div class="aia-settings-section">
+                    <h2>🔍 Tavily Search API Settings</h2>
+                    <p class="description">Tavily provides web search capabilities for AI-powered research and content generation.</p>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="aia_tavily_api_key">Tavily API Key</label>
+                            </th>
+                            <td>
+                                <input type="password" 
+                                       name="aia_tavily_api_key" 
+                                       id="aia_tavily_api_key" 
+                                       value="<?php echo esc_attr($tavily_api_key); ?>"
+                                       class="regular-text"
+                                       autocomplete="off"
+                                       placeholder="Enter your Tavily API key">
+                                <p class="description">
+                                    <a href="https://app.tavily.com/sign-in" target="_blank">Get your Tavily API key</a>
+                                </p>
+                                <?php if (!empty($tavily_api_key)): ?>
+                                    <p style="color: #28a745; margin-top: 5px;">✅ API key configured</p>
+                                <?php else: ?>
+                                    <p style="color: #dc3545; margin-top: 5px;">❌ API key not configured</p>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="aia_tavily_search_depth">Search Depth</label>
+                            </th>
+                            <td>
+                                <select name="aia_tavily_search_depth" id="aia_tavily_search_depth">
+                                    <option value="basic" <?php selected($tavily_search_depth, 'basic'); ?>>Basic (Faster, lower cost)</option>
+                                    <option value="advanced" <?php selected($tavily_search_depth, 'advanced'); ?>>Advanced (More thorough, higher cost)</option>
+                                </select>
+                                <p class="description">Advanced mode provides more comprehensive search results with additional context.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="aia_tavily_max_results">Max Results</label>
+                            </th>
+                            <td>
+                                <input type="number" 
+                                       name="aia_tavily_max_results" 
+                                       id="aia_tavily_max_results" 
+                                       value="<?php echo esc_attr($tavily_max_results); ?>"
+                                       min="1"
+                                       max="20"
+                                       class="small-text">
+                                <p class="description">Maximum number of search results to return (1-20)</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label>Test Connection</label>
+                            </th>
+                            <td>
+                                <button type="button" id="aia_test_tavily" class="button button-secondary">Test Tavily Connection</button>
+                                <span id="aia_tavily_test_result" style="margin-left: 10px;"></span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
                 <!-- ============ GENERAL POST SETTINGS ============ -->
                 <div class="aia-settings-section">
                     <h2>📝 Post Settings</h2>
@@ -312,24 +389,24 @@ class AIA_AI_Settings {
                 border-radius: 4px;
                 min-height: 300px;
             }
-            #aia_api_test_result, #aia_gemini_test_result, #aia_glm_test_result {
+            #aia_api_test_result, #aia_gemini_test_result, #aia_glm_test_result, #aia_tavily_test_result {
                 padding: 8px 12px;
                 border-radius: 4px;
                 display: none;
             }
-            #aia_api_test_result.success, #aia_gemini_test_result.success, #aia_glm_test_result.success {
+            #aia_api_test_result.success, #aia_gemini_test_result.success, #aia_glm_test_result.success, #aia_tavily_test_result.success {
                 background: #d4edda;
                 color: #155724;
                 border: 1px solid #c3e6cb;
                 display: block;
             }
-            #aia_api_test_result.error, #aia_gemini_test_result.error, #aia_glm_test_result.error {
+            #aia_api_test_result.error, #aia_gemini_test_result.error, #aia_glm_test_result.error, #aia_tavily_test_result.error {
                 background: #f8d7da;
                 color: #721c24;
                 border: 1px solid #f5c6cb;
                 display: block;
             }
-            #aia_api_test_result.loading, #aia_gemini_test_result.loading, #aia_glm_test_result.loading {
+            #aia_api_test_result.loading, #aia_gemini_test_result.loading, #aia_glm_test_result.loading, #aia_tavily_test_result.loading {
                 background: #e2e3e5;
                 color: #383d41;
                 border: 1px solid #d6d8db;
@@ -455,6 +532,50 @@ class AIA_AI_Settings {
                     },
                     error: function() {
                         button.prop('disabled', false).text('Test GLM Connection');
+                        resultSpan.removeClass().addClass('error').html('Connection failed. Please try again.').show();
+                    }
+                });
+            });
+            
+            // Test Tavily Connection
+            $('#aia_test_tavily').on('click', function() {
+                var api_key = $('#aia_tavily_api_key').val();
+                var search_depth = $('#aia_tavily_search_depth').val();
+                var max_results = $('#aia_tavily_max_results').val();
+                var resultSpan = $('#aia_tavily_test_result');
+                var button = $(this);
+                
+                resultSpan.hide().removeClass().html('');
+                if (!api_key) {
+                    resultSpan.addClass('error').html('Please enter your Tavily API key.').show();
+                    return;
+                }
+                
+                button.prop('disabled', true).text('Testing...');
+                resultSpan.addClass('loading').html('Testing Tavily connection...').show();
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'aia_test_tavily',
+                        api_key: api_key,
+                        search_depth: search_depth,
+                        max_results: max_results,
+                        nonce: testNonce
+                    },
+                    dataType: 'json',
+                    timeout: 60000,
+                    success: function(response) {
+                        button.prop('disabled', false).text('Test Tavily Connection');
+                        if (response.success) {
+                            resultSpan.removeClass().addClass('success').html(response.data.message).show();
+                        } else {
+                            resultSpan.removeClass().addClass('error').html(response.data.message).show();
+                        }
+                    },
+                    error: function() {
+                        button.prop('disabled', false).text('Test Tavily Connection');
                         resultSpan.removeClass().addClass('error').html('Connection failed. Please try again.').show();
                     }
                 });
@@ -616,6 +737,86 @@ class AIA_AI_Settings {
         }
         
         return ['success' => false, 'message' => 'Unexpected response from GLM API'];
+    }
+    
+    /**
+     * Test Tavily API connection
+     */
+    public function test_tavily_connection() {
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'aia_test_api')) {
+            wp_send_json_error(array('message' => 'Security check failed.'));
+            return;
+        }
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Insufficient permissions'));
+            return;
+        }
+        
+        $api_key = isset($_POST['api_key']) ? sanitize_text_field($_POST['api_key']) : '';
+        $search_depth = isset($_POST['search_depth']) ? sanitize_text_field($_POST['search_depth']) : 'basic';
+        $max_results = isset($_POST['max_results']) ? intval($_POST['max_results']) : 5;
+        
+        if (empty($api_key)) {
+            wp_send_json_error(array('message' => 'Tavily API key is required'));
+            return;
+        }
+        
+        $result = $this->test_tavily($api_key, $search_depth, $max_results);
+        if ($result['success']) {
+            wp_send_json_success(array('message' => $result['message']));
+        } else {
+            wp_send_json_error(array('message' => $result['message']));
+        }
+    }
+    
+    /**
+     * Test Tavily API with a simple search query
+     */
+    private function test_tavily($api_key, $search_depth, $max_results) {
+        $url = 'https://api.tavily.com/search';
+        
+        $body = [
+            'query' => 'What is the weather like today?',
+            'search_depth' => $search_depth,
+            'max_results' => $max_results,
+            'include_answer' => true
+        ];
+        
+        $response = wp_remote_post($url, [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $api_key
+            ],
+            'body' => json_encode($body),
+            'timeout' => 30
+        ]);
+        
+        if (is_wp_error($response)) {
+            return ['success' => false, 'message' => 'Connection failed: ' . $response->get_error_message()];
+        }
+        
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+        
+        // Check for rate limit or other errors
+        if (isset($data['error'])) {
+            $error_msg = $data['error'] . ' ' . ($data['message'] ?? '');
+            return ['success' => false, 'message' => 'API Error: ' . $error_msg];
+        }
+        
+        if (isset($data['results']) && is_array($data['results'])) {
+            $result_count = count($data['results']);
+            $answer = isset($data['answer']) && !empty($data['answer']) 
+                ? '📝 Answer: "' . esc_html(substr($data['answer'], 0, 100)) . (strlen($data['answer']) > 100 ? '...' : '') . '"' 
+                : '📝 No answer generated';
+            
+            $msg = '✅ Connected successfully to Tavily API!<br>';
+            $msg .= '🔍 Found ' . $result_count . ' results for the search query.<br>';
+            $msg .= $answer;
+            return ['success' => true, 'message' => $msg];
+        }
+        
+        return ['success' => false, 'message' => 'Unexpected response from Tavily API'];
     }
     
     public function save_txt_file() {

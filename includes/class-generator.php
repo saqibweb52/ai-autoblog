@@ -1,387 +1,240 @@
 <?php
 // includes/class-generator.php
-
-if (!defined('ABSPATH')) {
-    exit;
-}
+if (!defined('ABSPATH')) exit;
 
 class AIA_Content_Generator {
-    
-    private $grounding_system;
-    
+
     public function __construct() {
-        $this->grounding_system = new AIA_Grounding_System();
+        // No grounding system anymore
     }
-    
+
     public function generate_post($keyword, $author_id, $categories = array()) {
-        // Get author data from WordPress user
+        $logger = new AIA_Logger();
+
+        // Get author data
         $user = get_userdata($author_id);
         if (!$user) {
+            $logger->log("Invalid author ID: {$author_id}", 'error');
             return false;
         }
-        
+
         // Get author style
         $author_style = new AIA_Author_Style();
         $author = $author_style->get_author_by_id($author_id);
-        
         if (!$author) {
+            $logger->log("Author style not found for ID: {$author_id}", 'error');
             return false;
         }
-        
-        // Get research data - will return false if failed
-        $research = $this->grounding_system->research_topic($keyword);
-        
-        // If research failed, return false - no post will be created
-        if ($research === false) {
-            $logger = new AIA_Logger();
-            $logger->log("Research failed for keyword '{$keyword}'. Skipping post generation.", 'error');
+
+        // ========== RESEARCH PHASE (Tavily) ==========
+        $research_package = null;
+        if (AIA_Research_Engine::is_available()) {
+            $research_engine = new AIA_Research_Engine();
+            $research_package = $research_engine->research($keyword);
+            if ($research_package === false) {
+                $logger->log("Tavily research failed for '{$keyword}'", 'warning');
+            }
+        } else {
+            $logger->log("Tavily not configured. Skipping research for '{$keyword}'", 'warning');
+        }
+
+        // ========== BUILD PROMPT ==========
+        $instructions = $this->get_blog_instructions();
+        if (empty($instructions)) {
+            $logger->log("No blog instructions found", 'error');
             return false;
         }
-        
-        // Extract content from research
-        $content_data = $this->extract_content_from_research($research);
-        
-        // Add categories to the result
-        $content_data['categories'] = $categories;
-        
-        // Debug logging
-        $logger = new AIA_Logger();
-        $logger->log("Extracted content: title=" . ($content_data['title'] ?? 'NOT SET') . ", content_length=" . strlen($content_data['content'] ?? ''), 'debug');
-        $logger->log("Featured image: " . ($content_data['featured_image'] ?? 'NOT SET'), 'debug');
-        if (!empty($categories)) {
-            $logger->log("Categories: " . implode(', ', $categories), 'debug');
+
+        // Inject research facts if available
+        if ($research_package && !empty($research_package['facts'])) {
+            $facts_text = "RESEARCH FACTS (use these to write the article, do not invent facts):\n";
+            foreach ($research_package['facts'] as $fact) {
+                $facts_text .= "- " . $fact['text'] . " (source: " . $fact['source'] . ")\n";
+            }
+            if (strpos($instructions, '[RESEARCH_FACTS]') !== false) {
+                $instructions = str_replace('[RESEARCH_FACTS]', $facts_text, $instructions);
+            } else {
+                $instructions = $facts_text . "\n\n" . $instructions;
+            }
+            // We can also use suggested title/meta as hints
+            if (!empty($research_package['suggested_title'])) {
+                $instructions .= "\n\nSuggested title hint: " . $research_package['suggested_title'];
+            }
         }
-        
-        // Validate content before returning
+
+        // Replace keyword placeholders
+        $prompt = str_replace('[Generated from keyword]', $keyword, $instructions);
+        $prompt = str_replace('[Generated from keyword]', $keyword, $prompt);
+
+        // ========== CALL AI ==========
+        $response = $this->call_ai($prompt);
+        if (!$response) {
+            $logger->log("AI call failed for keyword '{$keyword}'", 'error');
+            return false;
+        }
+
+        // ========== PARSE RESPONSE ==========
+        $content_data = $this->extract_content_from_response($response);
         if (empty($content_data['content']) || strlen(strip_tags($content_data['content'])) < 300) {
-            $logger = new AIA_Logger();
-            $logger->log("Generated content for '{$keyword}' is too short or empty. Word count: " . str_word_count(strip_tags($content_data['content'] ?? '')), 'error');
+            $logger->log("Generated content too short for '{$keyword}'", 'error');
             return false;
         }
-        
+
+        // Add categories
+        $content_data['categories'] = $categories;
+
+        // Log success
+        $logger->log("Content generated successfully for '{$keyword}'. Length: " . strlen($content_data['content']), 'debug');
+
         return $content_data;
     }
-    
-    private function extract_content_from_research($research) {
-        $summaries = $research['summaries'] ?? '';
-        $featured_image = '';
-        
-        // If summaries is an array (JSON data), extract fields
-        if (is_array($summaries)) {
-            // Check if we have the parsed JSON structure
-            if (isset($summaries['seo_title']) && isset($summaries['content'])) {
-                $seo_title = $summaries['seo_title'] ?? '';
-                $meta_description = $summaries['meta_description'] ?? '';
-                $content = $summaries['content'] ?? '';
-                $featured_image = $summaries['featured_image_url'] ?? '';
-                
-                // Clean up the content
-                $content = $this->clean_content($content);
-                
-                // If no SEO title found, generate one
-                if (empty($seo_title)) {
-                    $seo_title = $this->extract_title_from_content($content);
-                }
-                
-                // If no meta description found, generate one
-                if (empty($meta_description)) {
-                    $meta_description = $this->extract_meta_from_content($content);
-                }
-                
-                // If no featured image, generate one
-                if (empty($featured_image)) {
-                    $image_id = rand(1, 100);
-                    $featured_image = "https://picsum.photos/id/{$image_id}/800/400";
-                }
-                
-                return [
-                    'title' => $seo_title,
-                    'meta_description' => $meta_description,
-                    'content' => $content,
-                    'featured_image' => $featured_image,
-                    'excerpt' => wp_trim_words(strip_tags($content), 55)
-                ];
-            }
-            
-            // If we have a 'content' field but no 'seo_title', try to extract
-            if (isset($summaries['content'])) {
-                $content = $summaries['content'];
-                $content = $this->clean_content($content);
-                
-                // Try to extract title from content
-                $seo_title = $this->extract_title_from_content($content);
-                $meta_description = $this->extract_meta_from_content($content);
-                
-                // Generate featured image
-                $image_id = rand(1, 100);
-                $featured_image = "https://picsum.photos/id/{$image_id}/800/400";
-                
-                return [
-                    'title' => $seo_title,
-                    'meta_description' => $meta_description,
-                    'content' => $content,
-                    'featured_image' => $featured_image,
-                    'excerpt' => wp_trim_words(strip_tags($content), 55)
-                ];
-            }
+
+    private function get_blog_instructions() {
+        $instructions_file = AIA_DATA_DIR . 'blog_instructions.txt';
+        if (!file_exists($instructions_file)) {
+            return false;
         }
-        
-        // Fallback: try to extract from raw content (string)
-        if (is_string($summaries)) {
-            // Try to parse as JSON
-            $parsed = $this->parse_json_response($summaries);
-            
-            if ($parsed && isset($parsed['seo_title']) && isset($parsed['content'])) {
-                $seo_title = $parsed['seo_title'] ?? '';
-                $meta_description = $parsed['meta_description'] ?? '';
-                $content = $parsed['content'] ?? '';
-                $featured_image = $parsed['featured_image_url'] ?? '';
-                
-                // Clean up the content
-                $content = $this->clean_content($content);
-                
-                // If no featured image, generate one
-                if (empty($featured_image)) {
-                    $image_id = rand(1, 100);
-                    $featured_image = "https://picsum.photos/id/{$image_id}/800/400";
-                }
-                
-                return [
-                    'title' => $seo_title,
-                    'meta_description' => $meta_description,
-                    'content' => $content,
-                    'featured_image' => $featured_image,
-                    'excerpt' => wp_trim_words(strip_tags($content), 55)
-                ];
-            }
-            
-            // If JSON parsing failed, try to extract manually
-            $seo_title = $this->extract_seo_title($summaries);
-            $meta_description = $this->extract_meta_description($summaries);
-            $content = $this->extract_content($summaries);
-            $featured_image = $this->extract_featured_image($summaries);
-            
-            // Clean up the content
-            $content = $this->clean_content($content);
-            
-            // If no featured image, generate one
-            if (empty($featured_image)) {
-                $image_id = rand(1, 100);
-                $featured_image = "https://picsum.photos/id/{$image_id}/800/400";
-            }
-            
+        return file_get_contents($instructions_file);
+    }
+
+    private function call_ai($prompt) {
+        $provider = get_option('aia_ai_provider', 'gemini');
+        if ($provider === 'gemini') {
+            return $this->call_gemini($prompt);
+        } else {
+            return $this->call_glm($prompt);
+        }
+    }
+
+    private function call_gemini($prompt) {
+        $api_key = get_option('aia_api_key', '');
+        $model = get_option('aia_gemini_model', 'gemini-2.0-flash');
+        if (empty($api_key)) return false;
+
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$api_key}";
+        $body = [
+            'contents' => [
+                ['parts' => [['text' => $prompt]]]
+            ]
+        ];
+        // No grounding tools – Tavily already provided facts
+        $response = wp_remote_post($url, [
+            'headers' => ['Content-Type' => 'application/json'],
+            'body' => json_encode($body),
+            'timeout' => 120
+        ]);
+        if (is_wp_error($response)) return false;
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        return $data['candidates'][0]['content']['parts'][0]['text'] ?? false;
+    }
+
+    private function call_glm($prompt) {
+        $api_key = get_option('aia_glm_api_key', '');
+        $model = get_option('aia_glm_model', 'glm-4-flash');
+        if (empty($api_key)) return false;
+
+        $url = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+        $body = [
+            'model' => $model,
+            'messages' => [['role' => 'user', 'content' => $prompt]],
+            'temperature' => 0.7,
+            'max_tokens' => 4096
+        ];
+        $response = wp_remote_post($url, [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $api_key
+            ],
+            'body' => json_encode($body),
+            'timeout' => 120
+        ]);
+        if (is_wp_error($response)) return false;
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        return $data['choices'][0]['message']['content'] ?? false;
+    }
+
+    private function extract_content_from_response($response) {
+        // Try to parse JSON
+        $json = $this->extract_json($response);
+        if ($json && isset($json['seo_title']) && isset($json['content'])) {
             return [
-                'title' => $seo_title,
-                'meta_description' => $meta_description,
-                'content' => $content,
-                'featured_image' => $featured_image,
-                'excerpt' => wp_trim_words(strip_tags($content), 55)
+                'title' => $json['seo_title'],
+                'meta_description' => $json['meta_description'] ?? '',
+                'content' => $this->clean_content($json['content']),
+                'featured_image' => $json['featured_image_url'] ?? '',
             ];
         }
-        
-        // Ultimate fallback
-        $image_id = rand(1, 100);
+
+        // Fallback: extract manually
+        $title = $this->extract_title($response);
+        $meta = $this->extract_meta($response);
+        $content = $this->extract_content_html($response);
+        $image = $this->extract_featured_image($response);
+
         return [
-            'title' => 'Blog Post',
-            'meta_description' => '',
-            'content' => is_string($summaries) ? $summaries : '',
-            'featured_image' => "https://picsum.photos/id/{$image_id}/800/400",
-            'excerpt' => ''
+            'title' => $title,
+            'meta_description' => $meta,
+            'content' => $this->clean_content($content),
+            'featured_image' => $image,
         ];
     }
-    
-    /**
-     * Extract featured image from JSON
-     */
-    private function extract_featured_image($content) {
-        if (preg_match('/"featured_image_url":\s*"([^"]+)"/', $content, $matches)) {
-            return $matches[1];
-        }
-        return '';
-    }
-    
-    /**
-     * Parse JSON response from AI
-     */
-    private function parse_json_response($content) {
-        // Clean the content - remove any markdown code fences
+
+    private function extract_json($content) {
         $content = preg_replace('/```json\s*/', '', $content);
         $content = preg_replace('/```\s*/', '', $content);
-        $content = trim($content);
-        
-        // Try to parse the entire response as JSON
         $data = json_decode($content, true);
-        if ($data && isset($data['seo_title']) && isset($data['content'])) {
-            return $this->clean_parsed_data($data);
+        if ($data && is_array($data)) return $data;
+
+        if (preg_match('/\{[^{}]*"seo_title"[^{}]*"content"[^{}]*\}/s', $content, $matches)) {
+            $json = $this->fix_json($matches[0]);
+            $data = json_decode($json, true);
+            if ($data && is_array($data)) return $data;
         }
-        
-        // Try with more flexible pattern
-        if (preg_match('/\{("seo_title"|"content"|"meta_description")[^}]*\}/s', $content, $matches)) {
-            $json_string = $this->fix_json_string($matches[0]);
-            $data = json_decode($json_string, true);
-            if ($data && isset($data['seo_title']) && isset($data['content'])) {
-                return $this->clean_parsed_data($data);
-            }
-        }
-        
         return null;
     }
-    
-    private function clean_parsed_data($data) {
-        // Clean seo_title
-        if (isset($data['seo_title'])) {
-            $data['seo_title'] = stripslashes(trim($data['seo_title']));
-        }
-        
-        // Clean meta_description
-        if (isset($data['meta_description'])) {
-            $data['meta_description'] = stripslashes(trim($data['meta_description']));
-        }
-        
-        // Clean content - handle all escaping cases
-        if (isset($data['content'])) {
-            $content = $data['content'];
-            
-            // Handle double escaping
-            $content = str_replace('\\n', "\n", $content);
-            $content = str_replace('\n', "\n", $content);
-            $content = str_replace('\\"', '"', $content);
-            $content = str_replace('\"', '"', $content);
-            $content = str_replace('\\t', "\t", $content);
-            $content = str_replace('\t', "\t", $content);
-            $content = str_replace('\\/', '/', $content);
-            $content = str_replace('\/', '/', $content);
-            
-            // Remove any remaining backslashes
-            $content = stripslashes($content);
-            
-            // Trim
-            $content = trim($content);
-            
-            $data['content'] = $content;
-        }
-        
-        return $data;
-    }
-    
-    private function fix_json_string($json) {
-        // Remove any trailing commas
+
+    private function fix_json($json) {
         $json = preg_replace('/,\s*}/', '}', $json);
         $json = preg_replace('/,\s*\]/', ']', $json);
-        
-        return $json;
+        return str_replace('\"', '"', $json);
     }
-    
+
     private function clean_content($content) {
-        // Remove any escaped newlines
         $content = str_replace('\\n', "\n", $content);
         $content = str_replace('\n', "\n", $content);
-        $content = str_replace('\\t', "    ", $content);
-        $content = str_replace('\t', "    ", $content);
         $content = str_replace('\\"', '"', $content);
         $content = str_replace('\"', '"', $content);
-        
-        // Remove any markdown code fences
-        $content = preg_replace('/```json\s*/', '', $content);
-        $content = preg_replace('/```\s*/', '', $content);
-        
-        // Remove any figure/image tags from content (they should be featured images)
+        $content = stripslashes($content);
+        // Remove any figure tags (featured image already handled)
         $content = preg_replace('/<figure[^>]*>.*?<\/figure>/s', '', $content);
-        
-        // If content looks like it has JSON wrapper, try to extract just the HTML
-        if (preg_match('/"content":\s*"([^"]+)"\s*}/s', $content, $matches)) {
-            $content = stripslashes($matches[1]);
-            $content = str_replace('\\n', "\n", $content);
-            $content = str_replace('\n', "\n", $content);
-            $content = str_replace('\\t', "    ", $content);
-            $content = str_replace('\t', "    ", $content);
-            $content = str_replace('\\"', '"', $content);
-            $content = str_replace('\"', '"', $content);
-        }
-        
         return trim($content);
     }
-    
-    private function extract_title_from_content($content) {
-        // Try to find H1
-        if (preg_match('/<h1[^>]*>(.*?)<\/h1>/i', $content, $matches)) {
-            return trim(strip_tags($matches[1]));
-        }
-        
-        // Try to find any heading
-        if (preg_match('/<h[2-6][^>]*>(.*?)<\/h[2-6]>/i', $content, $matches)) {
-            return trim(strip_tags($matches[1]));
-        }
-        
-        // Try to find title-like text in first paragraph
-        if (preg_match('/<p[^>]*>(.{10,100})<\/p>/i', $content, $matches)) {
-            $text = trim(strip_tags($matches[1]));
-            if (strlen($text) > 10 && strlen($text) < 100) {
-                return $text;
-            }
-        }
-        
+
+    private function extract_title($content) {
+        if (preg_match('/"seo_title":\s*"([^"]+)"/', $content, $m)) return $m[1];
+        if (preg_match('/<h1[^>]*>(.*?)<\/h1>/i', $content, $m)) return strip_tags($m[1]);
         return 'Blog Post';
     }
-    
-    private function extract_meta_from_content($content) {
-        // Try to find first paragraph
-        if (preg_match('/<p[^>]*>(.{50,200})<\/p>/i', $content, $matches)) {
-            $first_para = trim(strip_tags($matches[1]));
-            if (strlen($first_para) > 50) {
-                return substr($first_para, 0, 160);
-            }
+
+    private function extract_meta($content) {
+        if (preg_match('/"meta_description":\s*"([^"]+)"/', $content, $m)) return $m[1];
+        if (preg_match('/<p[^>]*>(.{50,200})<\/p>/i', $content, $m)) {
+            $text = strip_tags($m[1]);
+            return substr($text, 0, 160);
         }
-        
         return '';
     }
-    
-    private function extract_seo_title($content) {
-        // Try to find SEO title pattern
-        if (preg_match('/"seo_title":\s*"([^"]+)"/', $content, $matches)) {
-            return stripslashes($matches[1]);
+
+    private function extract_content_html($content) {
+        if (preg_match('/"content":\s*"((?:[^"\\\\]|\\\\.)*)"/s', $content, $m)) {
+            $html = stripslashes($m[1]);
+            return str_replace('\n', "\n", $html);
         }
-        
-        // Try to find H1
-        if (preg_match('/<h1[^>]*>(.*?)<\/h1>/i', $content, $matches)) {
-            return trim(strip_tags($matches[1]));
-        }
-        
-        return 'Blog Post';
-    }
-    
-    private function extract_meta_description($content) {
-        // Try to find meta description pattern
-        if (preg_match('/"meta_description":\s*"([^"]+)"/', $content, $matches)) {
-            return stripslashes($matches[1]);
-        }
-        
-        // Try to find first paragraph
-        if (preg_match('/<p[^>]*>(.{50,200})<\/p>/i', $content, $matches)) {
-            $first_para = trim(strip_tags($matches[1]));
-            if (strlen($first_para) > 50) {
-                return substr($first_para, 0, 160);
-            }
-        }
-        
-        return '';
-    }
-    
-    private function extract_content($content) {
-        // Try to find content pattern
-        if (preg_match('/"content":\s*"((?:[^"\\\\]|\\\\.)*)"/s', $content, $matches)) {
-            $content = stripslashes($matches[1]);
-            $content = str_replace('\n', "\n", $content);
-            $content = str_replace('\t', "    ", $content);
-            $content = str_replace('\"', '"', $content);
-            return $content;
-        }
-        
-        // If content already has HTML, return it
-        if (strpos($content, '<') !== false && strpos($content, '>') !== false) {
-            return $content;
-        }
-        
         return $content;
+    }
+
+    private function extract_featured_image($content) {
+        if (preg_match('/"featured_image_url":\s*"([^"]+)"/', $content, $m)) return $m[1];
+        return '';
     }
 }
