@@ -205,5 +205,96 @@
         ],
         "status": "done",
         "created_at": "2026-08-08 11:53:44"
+    },
+    {
+        "id": "kw_6a781f6ec96113.15778692",
+        "keyword": "should you use AI for content",
+        "author_id": 1,
+        "categories": [
+            6,
+            7
+        ],
+        "status": "done",
+        "created_at": "2026-08-09 06:34:22"
+    },
+    {
+        "id": "kw_6a783b8f62e6f6.18270329",
+        "keyword": "should you use AI for content",
+        "author_id": 2,
+        "categories": [
+            32
+        ],
+        "status": "done",
+        "created_at": "2026-08-09 08:34:23"
+    },
+    {
+        "id": "kw_6a783dc2dc5e73.57071515",
+        "keyword": "seo",
+        "author_id": 3,
+        "categories": [
+            6
+        ],
+        "status": "done",
+        "created_at": "2026-08-09 08:43:46"
+    },
+    {
+        "id": "kw_6a784de7ed0293.18303034",
+        "keyword": "laravel tips",
+        "author_id": 3,
+        "categories": [
+            7
+        ],
+        "status": "done",
+        "created_at": "2026-08-09 09:52:39"
+    },
+    {
+        "id": "kw_6a78507d316163.89270000",
+        "keyword": "laravel tips",
+        "author_id": 1,
+        "categories": [
+            7
+        ],
+        "status": "done",
+        "created_at": "2026-08-09 10:03:41"
+    },
+    {
+        "id": "kw_6a78524574eea7.44286499",
+        "keyword": "wordpress seo tips",
+        "author_id": 1,
+        "categories": [
+            7
+        ],
+        "status": "done",
+        "created_at": "2026-08-09 10:11:17"
+    },
+    {
+        "id": "kw_6a7859bba70f04.47427484",
+        "keyword": "wordpress seo tips",
+        "author_id": 3,
+        "categories": [
+            6
+        ],
+        "status": "done",
+        "created_at": "2026-08-09 10:43:07"
+    },
+    {
+        "id": "kw_6a786055e56801.39290579",
+        "keyword": "wordpress seo tips",
+        "author_id": 1,
+        "categories": [
+            33
+        ],
+        "status": "done",
+        "created_at": "2026-08-09 11:11:17"
+    },
+    {
+        "id": "kw_6a786a11d54942.71430485",
+        "keyword": "humans without ai",
+        "author_id": 3,
+        "categories": [
+            6
+        ],
+        "status": "pending",
+        "created_at": "2026-08-09 11:52:49"
     }
 ]

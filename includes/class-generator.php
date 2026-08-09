@@ -4,86 +4,236 @@ if (!defined('ABSPATH')) exit;
 
 class AIA_Content_Generator {
 
-    public function __construct() {
-        // No grounding system
-    }
-
-    public function generate_post($keyword, $author_id, $categories = array()) {
+    public function generate_post($keyword, $author_id, $categories = array(), $process_logger = null) {
         $logger = new AIA_Logger();
+        if ($process_logger === null) {
+            $process_logger = new AIA_Process_Logger();
+        }
 
+        // Store the exact keyword for consistency
+        $exact_keyword = trim($keyword);
+        $process_logger->add_entry('info', "🚀 Starting generation for keyword: '{$exact_keyword}'");
+
+        // Get author data
         $user = get_userdata($author_id);
         if (!$user) {
+            $process_logger->add_entry('error', "❌ Invalid author ID: {$author_id}");
             $logger->log("Invalid author ID: {$author_id}", 'error');
             return false;
         }
+        $process_logger->add_entry('info', "👤 Author found: " . $user->display_name);
 
+        // Get author style
         $author_style = new AIA_Author_Style();
         $author = $author_style->get_author_by_id($author_id);
         if (!$author) {
+            $process_logger->add_entry('error', "❌ Author style not found for ID: {$author_id}");
             $logger->log("Author style not found for ID: {$author_id}", 'error');
             return false;
         }
+        $process_logger->add_entry('info', "📝 Author style loaded: tone={$author['tone']}, audience={$author['audience']}");
 
         // ========== RESEARCH (Tavily) ==========
         $research_package = null;
         if (AIA_Research_Engine::is_available()) {
+            $process_logger->add_entry('info', "🔍 Tavily is configured. Starting research...");
             $research_engine = new AIA_Research_Engine();
-            $research_package = $research_engine->research($keyword);
+            $research_package = $research_engine->research($exact_keyword);
             if ($research_package === false) {
-                $logger->log("Tavily research failed for '{$keyword}'", 'warning');
+                $process_logger->add_entry('warning', "⚠️ Tavily research failed for '{$exact_keyword}'");
+                $logger->log("Tavily research failed for '{$exact_keyword}'", 'warning');
+            } else {
+                $process_logger->add_entry('success', "✅ Research complete. Found " . count($research_package['facts']) . " facts, " . count($research_package['sources']) . " sources.");
             }
         } else {
-            $logger->log("Tavily not configured. Skipping research for '{$keyword}'", 'warning');
+            $process_logger->add_entry('warning', "⚠️ Tavily not configured. Skipping research.");
         }
 
         // ========== BUILD PROMPT ==========
+        $process_logger->add_entry('info', "📄 Loading blog instructions...");
         $instructions = $this->get_blog_instructions();
         if (empty($instructions)) {
-            $logger->log("No blog instructions found", 'error');
+            $process_logger->add_entry('error', "❌ No blog instructions found");
             return false;
         }
 
-        // Inject research facts
-        if ($research_package && !empty($research_package['facts'])) {
-            $facts_text = "RESEARCH FACTS (use these to write the article, do not invent facts):\n";
-            foreach ($research_package['facts'] as $fact) {
-                $facts_text .= "- " . $fact['text'] . " (source: " . $fact['source'] . ")\n";
-            }
-            if (strpos($instructions, '[RESEARCH_FACTS]') !== false) {
-                $instructions = str_replace('[RESEARCH_FACTS]', $facts_text, $instructions);
-            } else {
-                $instructions = $facts_text . "\n\n" . $instructions;
-            }
-            if (!empty($research_package['suggested_title'])) {
-                $instructions .= "\n\nSuggested title hint: " . $research_package['suggested_title'];
-            }
-        }
+        // Build prompt with keyword consistency enforced
+        $process_logger->add_entry('info', "🔨 Building AI prompt with consistent keyword...");
+        $prompt = $this->build_prompt($instructions, $exact_keyword, $research_package);
+        $process_logger->add_entry('debug', "📝 Prompt built. Length: " . strlen($prompt));
 
+        // ========== CALL AI ==========
+        $process_logger->add_entry('info', "🤖 Calling AI provider...");
+        $response = $this->call_ai($prompt);
+        if (!$response) {
+            $process_logger->add_entry('error', "❌ AI call failed for keyword '{$exact_keyword}'");
+            $logger->log("AI call failed for keyword '{$exact_keyword}'", 'error');
+            return false;
+        }
+        $process_logger->add_entry('success', "✅ AI response received. Length: " . strlen($response));
+
+        // ========== PARSE RESPONSE ==========
+        $process_logger->add_entry('info', "🔍 Parsing AI response...");
+        $content_data = $this->extract_content_from_response($response);
+        
+        if (empty($content_data['content']) || strlen(strip_tags($content_data['content'])) < 300) {
+            $process_logger->add_entry('error', "❌ Generated content too short or empty.");
+            return false;
+        }
+        
+        // ========== ENSURE KEYWORD CONSISTENCY ==========
+        $process_logger->add_entry('info', "🔧 Ensuring keyword consistency...");
+        
+        // 1. Ensure title contains the exact keyword
+        if (!empty($content_data['title']) && stripos($content_data['title'], $exact_keyword) === false) {
+            // Add keyword to title if missing
+            $content_data['title'] = $this->add_keyword_to_title($content_data['title'], $exact_keyword);
+            $process_logger->add_entry('info', "Added keyword to title: {$content_data['title']}");
+        }
+        
+        // 2. Ensure meta description contains the exact keyword
+        if (!empty($content_data['meta_description']) && stripos($content_data['meta_description'], $exact_keyword) === false) {
+            $content_data['meta_description'] = $this->add_keyword_to_meta($content_data['meta_description'], $exact_keyword);
+            $process_logger->add_entry('info', "Added keyword to meta description");
+        }
+        
+        // 3. Ensure content contains the exact keyword
+        if (stripos($content_data['content'], $exact_keyword) === false) {
+            // Insert keyword naturally into content
+            $content_data['content'] = $this->add_keyword_to_content($content_data['content'], $exact_keyword);
+            $process_logger->add_entry('info', "Added keyword to content body");
+        }
+        
+        $process_logger->add_entry('success', "✅ Content parsed. Title: " . $content_data['title']);
+        $process_logger->add_entry('debug', "📄 Content length: " . strlen($content_data['content']) . " characters");
+
+        // Add categories
+        $content_data['categories'] = $categories;
+        $content_data['keyword'] = $exact_keyword; // Store exact keyword for later use
+
+        $logger->log("Content generated successfully for '{$exact_keyword}'. Length: " . strlen($content_data['content']), 'debug');
+        $process_logger->add_entry('success', "✅ Generation complete! Ready for publishing.");
+
+        return $content_data;
+    }
+
+    /**
+     * Build the AI prompt with keyword consistency enforced
+     */
+    private function build_prompt($instructions, $keyword, $research_package = null) {
         // Replace keyword placeholders
         $prompt = str_replace('[Generated from keyword]', $keyword, $instructions);
         $prompt = str_replace('[Generated from keyword]', $keyword, $prompt);
-
-        // ========== ADD WORD COUNT INSTRUCTION ==========
-        $prompt .= "\n\nIMPORTANT: Write a blog post that is between 800 and 1200 words in length. Count the words carefully.";
-
-        // ========== CALL AI ==========
-        $response = $this->call_ai($prompt);
-        if (!$response) {
-            $logger->log("AI call failed for keyword '{$keyword}'", 'error');
-            return false;
+        
+        // Add explicit instruction for keyword consistency
+        $keyword_instruction = "\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        $keyword_instruction .= "CRITICAL KEYWORD CONSISTENCY RULES:\n";
+        $keyword_instruction .= "1. The focus keyword is: \"{$keyword}\"\n";
+        $keyword_instruction .= "2. You MUST use this EXACT keyword in the SEO title\n";
+        $keyword_instruction .= "3. You MUST use this EXACT keyword in the meta description\n";
+        $keyword_instruction .= "4. You MUST use this EXACT keyword at least twice in the content body\n";
+        $keyword_instruction .= "5. The keyword should appear naturally, not forced\n";
+        $keyword_instruction .= "6. Do NOT change, modify, or shorten the keyword\n";
+        $keyword_instruction .= "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        
+        $prompt = $keyword_instruction . $prompt;
+        
+        // Inject research facts if available
+        if ($research_package && !empty($research_package['facts'])) {
+            $facts_text = "RESEARCH FACTS (use these to write the article, do not invent facts):\n";
+            $facts_text .= "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+            foreach ($research_package['facts'] as $fact) {
+                $facts_text .= "• " . $fact['text'] . "\n";
+                $facts_text .= "  Source: " . $fact['source'] . "\n\n";
+            }
+            $facts_text .= "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+            
+            if (strpos($prompt, '[RESEARCH_FACTS]') !== false) {
+                $prompt = str_replace('[RESEARCH_FACTS]', $facts_text, $prompt);
+            } else {
+                $prompt = $facts_text . "\n\n" . $prompt;
+            }
+            
+            if (!empty($research_package['suggested_title'])) {
+                $prompt .= "\n\nSuggested title hint (you can improve it, but keep the keyword): " . $research_package['suggested_title'];
+            }
         }
+        
+        // Add word count & no-bold instruction
+        $prompt .= "\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+        $prompt .= "\nIMPORTANT INSTRUCTIONS:";
+        $prompt .= "\n• Write a blog post that is between 800 and 1200 words in length.";
+        $prompt .= "\n• Do NOT bold the focus keyword or any keyword.";
+        $prompt .= "\n• Use bold sparingly for emphasis of important concepts, not for SEO.";
+        $prompt .= "\n• Return ONLY valid JSON. No text before or after the JSON.";
+        $prompt .= "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+        
+        return $prompt;
+    }
 
-        // ========== PARSE RESPONSE ==========
-        $content_data = $this->extract_content_from_response($response);
-        if (empty($content_data['content']) || strlen(strip_tags($content_data['content'])) < 300) {
-            $logger->log("Generated content too short for '{$keyword}'", 'error');
-            return false;
+    /**
+     * Add keyword to title if missing
+     */
+    private function add_keyword_to_title($title, $keyword) {
+        // If title is empty, use keyword as title
+        if (empty($title)) {
+            return ucwords($keyword);
         }
+        
+        // Check if keyword already exists (case-insensitive)
+        if (stripos($title, $keyword) !== false) {
+            return $title;
+        }
+        
+        // Add keyword at the end with a separator
+        $separator = ' - ';
+        return trim($title) . $separator . ucwords($keyword);
+    }
 
-        $content_data['categories'] = $categories;
-        $logger->log("Content generated successfully for '{$keyword}'. Length: " . strlen($content_data['content']), 'debug');
+    /**
+     * Add keyword to meta description if missing
+     */
+    private function add_keyword_to_meta($meta, $keyword) {
+        // If meta is empty, create one with keyword
+        if (empty($meta)) {
+            return "Learn everything about " . ucwords($keyword) . ". Discover insights, tips, and best practices.";
+        }
+        
+        // Check if keyword already exists
+        if (stripos($meta, $keyword) !== false) {
+            return $meta;
+        }
+        
+        // Add keyword at the beginning
+        return ucwords($keyword) . " - " . $meta;
+    }
 
-        return $content_data;
+    /**
+     * Add keyword to content if missing
+     */
+    private function add_keyword_to_content($content, $keyword) {
+        // Check if keyword already exists
+        if (stripos($content, $keyword) !== false) {
+            return $content;
+        }
+        
+        // Try to add keyword in the first paragraph
+        $pattern = '/<p[^>]*>(.*?)<\/p>/i';
+        if (preg_match($pattern, $content, $matches)) {
+            $first_para = $matches[0];
+            $new_para = preg_replace(
+                '/<p[^>]*>(.*?)<\/p>/i',
+                '<p>$1 ' . esc_html($keyword) . '.</p>',
+                $first_para,
+                1
+            );
+            $content = str_replace($first_para, $new_para, $content);
+        } else {
+            // If no paragraph found, add at the beginning
+            $content = '<p>' . esc_html($keyword) . '. ' . strip_tags($content) . '</p>';
+        }
+        
+        return $content;
     }
 
     private function get_blog_instructions() {
@@ -114,13 +264,27 @@ class AIA_Content_Generator {
                 ['parts' => [['text' => $prompt]]]
             ]
         ];
+        
         $response = wp_remote_post($url, [
             'headers' => ['Content-Type' => 'application/json'],
             'body' => json_encode($body),
             'timeout' => 120
         ]);
-        if (is_wp_error($response)) return false;
+        
+        if (is_wp_error($response)) {
+            $logger = new AIA_Logger();
+            $logger->log("Gemini API error: " . $response->get_error_message(), 'error');
+            return false;
+        }
+        
         $data = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (isset($data['error'])) {
+            $logger = new AIA_Logger();
+            $logger->log("Gemini API error: " . ($data['error']['message'] ?? 'Unknown error'), 'error');
+            return false;
+        }
+        
         return $data['candidates'][0]['content']['parts'][0]['text'] ?? false;
     }
 
@@ -136,6 +300,7 @@ class AIA_Content_Generator {
             'temperature' => 0.7,
             'max_tokens' => 4096
         ];
+        
         $response = wp_remote_post($url, [
             'headers' => [
                 'Content-Type' => 'application/json',
@@ -144,12 +309,26 @@ class AIA_Content_Generator {
             'body' => json_encode($body),
             'timeout' => 120
         ]);
-        if (is_wp_error($response)) return false;
+        
+        if (is_wp_error($response)) {
+            $logger = new AIA_Logger();
+            $logger->log("GLM API error: " . $response->get_error_message(), 'error');
+            return false;
+        }
+        
         $data = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (isset($data['error'])) {
+            $logger = new AIA_Logger();
+            $logger->log("GLM API error: " . ($data['error']['message'] ?? 'Unknown error'), 'error');
+            return false;
+        }
+        
         return $data['choices'][0]['message']['content'] ?? false;
     }
 
     private function extract_content_from_response($response) {
+        // Try to parse JSON
         $json = $this->extract_json($response);
         if ($json && isset($json['seo_title']) && isset($json['content'])) {
             return [
@@ -160,7 +339,7 @@ class AIA_Content_Generator {
             ];
         }
 
-        // Fallback extraction
+        // Fallback: extract manually
         $title = $this->extract_title($response);
         $meta = $this->extract_meta($response);
         $content = $this->extract_content_html($response);
@@ -175,60 +354,126 @@ class AIA_Content_Generator {
     }
 
     private function extract_json($content) {
+        // Remove markdown code fences
         $content = preg_replace('/```json\s*/', '', $content);
         $content = preg_replace('/```\s*/', '', $content);
+        $content = trim($content);
+        
+        // Try to parse as JSON
         $data = json_decode($content, true);
         if ($data && is_array($data)) return $data;
 
+        // Try to find JSON in the content
         if (preg_match('/\{[^{}]*"seo_title"[^{}]*"content"[^{}]*\}/s', $content, $matches)) {
             $json = $this->fix_json($matches[0]);
             $data = json_decode($json, true);
             if ($data && is_array($data)) return $data;
         }
+        
+        // Try to find any JSON object
+        if (preg_match('/\{[^{}]*\}/s', $content, $matches)) {
+            $json = $this->fix_json($matches[0]);
+            $data = json_decode($json, true);
+            if ($data && is_array($data)) return $data;
+        }
+        
         return null;
     }
 
     private function fix_json($json) {
+        // Remove trailing commas
         $json = preg_replace('/,\s*}/', '}', $json);
         $json = preg_replace('/,\s*\]/', ']', $json);
-        return str_replace('\"', '"', $json);
+        
+        // Unescape double quotes
+        $json = str_replace('\"', '"', $json);
+        
+        return $json;
     }
 
     private function clean_content($content) {
+        // Handle escaped characters
         $content = str_replace('\\n', "\n", $content);
         $content = str_replace('\n', "\n", $content);
         $content = str_replace('\\"', '"', $content);
         $content = str_replace('\"', '"', $content);
+        $content = str_replace('\\t', "    ", $content);
+        $content = str_replace('\t', "    ", $content);
+        $content = str_replace('\\/', '/', $content);
+        $content = str_replace('\/', '/', $content);
         $content = stripslashes($content);
+        
+        // Remove any figure/image tags from content (they should be featured images)
         $content = preg_replace('/<figure[^>]*>.*?<\/figure>/s', '', $content);
+        $content = preg_replace('/<img[^>]*>/i', '', $content);
+        
+        // Remove markdown code fences
+        $content = preg_replace('/```json\s*/', '', $content);
+        $content = preg_replace('/```\s*/', '', $content);
+        
         return trim($content);
     }
 
     private function extract_title($content) {
-        if (preg_match('/"seo_title":\s*"([^"]+)"/', $content, $m)) return $m[1];
-        if (preg_match('/<h1[^>]*>(.*?)<\/h1>/i', $content, $m)) return strip_tags($m[1]);
+        // Try to find SEO title pattern
+        if (preg_match('/"seo_title":\s*"([^"]+)"/', $content, $matches)) {
+            return stripslashes($matches[1]);
+        }
+        
+        // Try to find H1
+        if (preg_match('/<h1[^>]*>(.*?)<\/h1>/i', $content, $matches)) {
+            return trim(strip_tags($matches[1]));
+        }
+        
+        // Try to find title-like text in first paragraph
+        if (preg_match('/<p[^>]*>(.{10,100})<\/p>/i', $content, $matches)) {
+            $text = trim(strip_tags($matches[1]));
+            if (strlen($text) > 10 && strlen($text) < 100) {
+                return $text;
+            }
+        }
+        
         return 'Blog Post';
     }
 
     private function extract_meta($content) {
-        if (preg_match('/"meta_description":\s*"([^"]+)"/', $content, $m)) return $m[1];
-        if (preg_match('/<p[^>]*>(.{50,200})<\/p>/i', $content, $m)) {
-            $text = strip_tags($m[1]);
-            return substr($text, 0, 160);
+        // Try to find meta description pattern
+        if (preg_match('/"meta_description":\s*"([^"]+)"/', $content, $matches)) {
+            return stripslashes($matches[1]);
         }
+        
+        // Try to find first paragraph
+        if (preg_match('/<p[^>]*>(.{50,200})<\/p>/i', $content, $matches)) {
+            $first_para = trim(strip_tags($matches[1]));
+            if (strlen($first_para) > 50) {
+                return substr($first_para, 0, 160);
+            }
+        }
+        
         return '';
     }
 
     private function extract_content_html($content) {
-        if (preg_match('/"content":\s*"((?:[^"\\\\]|\\\\.)*)"/s', $content, $m)) {
-            $html = stripslashes($m[1]);
-            return str_replace('\n', "\n", $html);
+        // Try to find content pattern
+        if (preg_match('/"content":\s*"((?:[^"\\\\]|\\\\.)*)"/s', $content, $matches)) {
+            $html = stripslashes($matches[1]);
+            $html = str_replace('\n', "\n", $html);
+            $html = str_replace('\t', "    ", $html);
+            return $html;
         }
+        
+        // If content already has HTML, return it
+        if (strpos($content, '<div') !== false && strpos($content, '>') !== false) {
+            return $content;
+        }
+        
         return $content;
     }
 
     private function extract_featured_image($content) {
-        if (preg_match('/"featured_image_url":\s*"([^"]+)"/', $content, $m)) return $m[1];
+        if (preg_match('/"featured_image_url":\s*"([^"]+)"/', $content, $matches)) {
+            return $matches[1];
+        }
         return '';
     }
 }

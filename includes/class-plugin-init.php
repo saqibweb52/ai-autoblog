@@ -15,20 +15,19 @@ class AIA_Plugin_Init {
         $includes = [
             'class-keywords.php',
             'class-author-style.php',
-            // 'class-grounding.php', // REMOVED
             'class-generator.php',
             'class-linking.php',
             'class-images.php',
             'class-publisher.php',
             'class-cron.php',
             'class-logger.php',
-            'class-indexnow.php'
+            'class-indexnow.php',
+            'class-process-logger.php'
         ];
         foreach ($includes as $file) {
             require_once AIA_PLUGIN_DIR . 'includes/' . $file;
         }
 
-        // Load research classes
         $research_files = [
             'class-tavily-client.php',
             'class-query-planner.php',
@@ -178,7 +177,6 @@ class AIA_Plugin_Init {
     }
 }
 
-// Global callback for sitemap sync
 function aia_sync_sitemaps_callback() {
     if (class_exists('AIA_Link_Manager')) {
         $link_manager = new AIA_Link_Manager();
