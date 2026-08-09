@@ -5,20 +5,18 @@ if (!defined('ABSPATH')) exit;
 class AIA_Content_Generator {
 
     public function __construct() {
-        // No grounding system anymore
+        // No grounding system
     }
 
     public function generate_post($keyword, $author_id, $categories = array()) {
         $logger = new AIA_Logger();
 
-        // Get author data
         $user = get_userdata($author_id);
         if (!$user) {
             $logger->log("Invalid author ID: {$author_id}", 'error');
             return false;
         }
 
-        // Get author style
         $author_style = new AIA_Author_Style();
         $author = $author_style->get_author_by_id($author_id);
         if (!$author) {
@@ -26,7 +24,7 @@ class AIA_Content_Generator {
             return false;
         }
 
-        // ========== RESEARCH PHASE (Tavily) ==========
+        // ========== RESEARCH (Tavily) ==========
         $research_package = null;
         if (AIA_Research_Engine::is_available()) {
             $research_engine = new AIA_Research_Engine();
@@ -45,7 +43,7 @@ class AIA_Content_Generator {
             return false;
         }
 
-        // Inject research facts if available
+        // Inject research facts
         if ($research_package && !empty($research_package['facts'])) {
             $facts_text = "RESEARCH FACTS (use these to write the article, do not invent facts):\n";
             foreach ($research_package['facts'] as $fact) {
@@ -56,7 +54,6 @@ class AIA_Content_Generator {
             } else {
                 $instructions = $facts_text . "\n\n" . $instructions;
             }
-            // We can also use suggested title/meta as hints
             if (!empty($research_package['suggested_title'])) {
                 $instructions .= "\n\nSuggested title hint: " . $research_package['suggested_title'];
             }
@@ -65,6 +62,9 @@ class AIA_Content_Generator {
         // Replace keyword placeholders
         $prompt = str_replace('[Generated from keyword]', $keyword, $instructions);
         $prompt = str_replace('[Generated from keyword]', $keyword, $prompt);
+
+        // ========== ADD WORD COUNT INSTRUCTION ==========
+        $prompt .= "\n\nIMPORTANT: Write a blog post that is between 800 and 1200 words in length. Count the words carefully.";
 
         // ========== CALL AI ==========
         $response = $this->call_ai($prompt);
@@ -80,10 +80,7 @@ class AIA_Content_Generator {
             return false;
         }
 
-        // Add categories
         $content_data['categories'] = $categories;
-
-        // Log success
         $logger->log("Content generated successfully for '{$keyword}'. Length: " . strlen($content_data['content']), 'debug');
 
         return $content_data;
@@ -117,7 +114,6 @@ class AIA_Content_Generator {
                 ['parts' => [['text' => $prompt]]]
             ]
         ];
-        // No grounding tools – Tavily already provided facts
         $response = wp_remote_post($url, [
             'headers' => ['Content-Type' => 'application/json'],
             'body' => json_encode($body),
@@ -154,7 +150,6 @@ class AIA_Content_Generator {
     }
 
     private function extract_content_from_response($response) {
-        // Try to parse JSON
         $json = $this->extract_json($response);
         if ($json && isset($json['seo_title']) && isset($json['content'])) {
             return [
@@ -165,7 +160,7 @@ class AIA_Content_Generator {
             ];
         }
 
-        // Fallback: extract manually
+        // Fallback extraction
         $title = $this->extract_title($response);
         $meta = $this->extract_meta($response);
         $content = $this->extract_content_html($response);
@@ -205,7 +200,6 @@ class AIA_Content_Generator {
         $content = str_replace('\\"', '"', $content);
         $content = str_replace('\"', '"', $content);
         $content = stripslashes($content);
-        // Remove any figure tags (featured image already handled)
         $content = preg_replace('/<figure[^>]*>.*?<\/figure>/s', '', $content);
         return trim($content);
     }

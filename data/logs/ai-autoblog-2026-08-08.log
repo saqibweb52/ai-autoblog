@@ -1,3 +1,78 @@
 [2026-08-08 11:07:26] [INFO] Fetched 7 links from sitemap: https://aryzohn.com/post-sitemap.xml
 [2026-08-08 11:07:27] [INFO] Fetched 8 links from sitemap: https://aryzohn.com/page-sitemap.xml
 [2026-08-08 11:07:27] [INFO] Daily sitemap sync completed. 15 links discovered.
+[2026-08-08 11:14:57] [INFO] Processing keyword: 'AI for marketing' (Author ID: 1)
+[2026-08-08 11:14:57] [INFO] Starting research for keyword: 'AI for marketing'
+[2026-08-08 11:14:57] [DEBUG] Generated 6 search queries for 'AI for marketing'
+[2026-08-08 11:15:15] [INFO] Analyzing 6 search responses
+[2026-08-08 11:15:15] [SUCCESS] Research complete. Facts: 23, Sources: 26
+[2026-08-08 11:15:35] [DEBUG] Content generated successfully for 'AI for marketing'. Length: 7628
+[2026-08-08 11:15:35] [DEBUG] Content generated successfully. Length: 7628
+[2026-08-08 11:15:35] [DEBUG] get_image_for_post received post_data: ["keyword","title"]
+[2026-08-08 11:15:35] [INFO] Using blog keyword for image search: 'AI for marketing'
+[2026-08-08 11:15:35] [DEBUG] Searching Unsplash with query: 'AI for marketing' (per_page: 30)
+[2026-08-08 11:15:37] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-08-08 11:15:37] [DEBUG] Found 30 images for keyword: 'AI for marketing'
+[2026-08-08 11:15:37] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-08-08 11:15:37] [DEBUG] Top score: 40 (matches: 1)
+[2026-08-08 11:15:37] [INFO] SUCCESS: Selected image with score: 40 for post
+[2026-08-08 11:15:37] [DEBUG] Image URL: https://images.unsplash.com/photo-1533750349088-cd871a92f312?ixid=M3wxMDAzNDkxfDB8MXxzZWFyY2h8NHx8QU...
+[2026-08-08 11:15:38] [INFO] Image added to content: https://images.unsplash.com/photo-1533750349088-cd871a92f312?ixid=M3wxMDAzNDkxfD...
+[2026-08-08 11:15:38] [DEBUG] Publishing post with title: Demystifying AI for Marketing: How to Scale Without Losing Your Soul
+[2026-08-08 11:15:38] [DEBUG] Content length: 8635
+[2026-08-08 11:15:38] [DEBUG] Assigning categories to post: 33
+[2026-08-08 11:15:38] [DEBUG] get_image_for_post received post_data: ["title","meta_description","content","featured_image","categories","keyword","author_id"]
+[2026-08-08 11:15:38] [INFO] Using blog keyword for image search: 'AI for marketing'
+[2026-08-08 11:15:38] [DEBUG] Searching Unsplash with query: 'AI for marketing' (per_page: 30)
+[2026-08-08 11:15:38] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-08-08 11:15:38] [DEBUG] Found 30 images for keyword: 'AI for marketing'
+[2026-08-08 11:15:38] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-08-08 11:15:38] [DEBUG] Top score: 40 (matches: 1)
+[2026-08-08 11:15:38] [INFO] SUCCESS: Selected image with score: 40 for post
+[2026-08-08 11:15:38] [DEBUG] Image URL: https://images.unsplash.com/photo-1533750349088-cd871a92f312?ixid=M3wxMDAzNDkxfDB8MXxzZWFyY2h8NHx8QU...
+[2026-08-08 11:15:48] [SUCCESS] Featured image set successfully for post ID: 3470
+[2026-08-08 11:15:48] [SUCCESS] Featured image set successfully for post ID: 3470
+[2026-08-08 11:15:48] [SUCCESS] Post published successfully. ID: 3470, Title: Demystifying AI for Marketing: How to Scale Without Losing Your Soul
+[2026-08-08 11:15:48] [ERROR] IndexNow: Post 3470 submission failed. Errors: 
+[2026-08-08 11:15:48] [SUCCESS] Post published successfully. Post ID: 3470
+[2026-08-08 11:53:54] [INFO] Processing keyword: 'AI for small businesses' (Author ID: 1)
+[2026-08-08 11:53:54] [INFO] Starting research for keyword: 'AI for small businesses'
+[2026-08-08 11:53:54] [DEBUG] Generated 6 search queries for 'AI for small businesses'
+[2026-08-08 11:53:54] [DEBUG] Searching: 'what is AI for small businesses' (depth: advanced)
+[2026-08-08 11:53:57] [DEBUG] Searching: 'benefits of AI for small businesses' (depth: advanced)
+[2026-08-08 11:54:00] [DEBUG] Searching: 'how to AI for small businesses' (depth: advanced)
+[2026-08-08 11:54:07] [DEBUG] Searching: 'AI for small businesses examples' (depth: advanced)
+[2026-08-08 11:54:11] [DEBUG] Searching: 'AI for small businesses best practices' (depth: advanced)
+[2026-08-08 11:54:17] [DEBUG] Searching: 'AI for small businesses guide' (depth: advanced)
+[2026-08-08 11:54:21] [INFO] Executed 6 searches (6 advanced, 0 basic)
+[2026-08-08 11:54:21] [INFO] Analyzing 6 search responses
+[2026-08-08 11:54:21] [SUCCESS] Research complete. Facts: 21, Sources: 23
+[2026-08-08 11:55:08] [DEBUG] Content generated successfully for 'AI for small businesses'. Length: 12471
+[2026-08-08 11:55:08] [DEBUG] Content generated successfully. Length: 12471
+[2026-08-08 11:55:08] [DEBUG] get_image_for_post received post_data: ["keyword","title"]
+[2026-08-08 11:55:08] [INFO] Using blog keyword for image search: 'AI for small businesses'
+[2026-08-08 11:55:08] [DEBUG] Searching Unsplash with query: 'AI for small businesses' (per_page: 30)
+[2026-08-08 11:55:09] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-08-08 11:55:09] [DEBUG] Found 30 images for keyword: 'AI for small businesses'
+[2026-08-08 11:55:09] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-08-08 11:55:09] [DEBUG] Top score: 34 (matches: 1)
+[2026-08-08 11:55:09] [INFO] SUCCESS: Selected image with score: 34 for post
+[2026-08-08 11:55:09] [DEBUG] Image URL: https://images.unsplash.com/photo-1708373100061-f75279dbaa7f?ixid=M3wxMDAzNDkxfDB8MXxzZWFyY2h8NHx8QU...
+[2026-08-08 11:55:10] [INFO] Image added to content: https://images.unsplash.com/photo-1708373100061-f75279dbaa7f?ixid=M3wxMDAzNDkxfD...
+[2026-08-08 11:55:10] [DEBUG] Publishing post with title: Is AI for Small Businesses Actually Worth the Hype? A Candid Guide
+[2026-08-08 11:55:10] [DEBUG] Content length: 14169
+[2026-08-08 11:55:10] [DEBUG] Assigning categories to post: 33
+[2026-08-08 11:55:10] [DEBUG] get_image_for_post received post_data: ["title","meta_description","content","featured_image","categories","keyword","author_id"]
+[2026-08-08 11:55:10] [INFO] Using blog keyword for image search: 'AI for small businesses'
+[2026-08-08 11:55:10] [DEBUG] Searching Unsplash with query: 'AI for small businesses' (per_page: 30)
+[2026-08-08 11:55:11] [INFO] UNSPLASH SUCCESS: Found 30 images
+[2026-08-08 11:55:11] [DEBUG] Found 30 images for keyword: 'AI for small businesses'
+[2026-08-08 11:55:11] [DEBUG] SCORE SUCCESS: Scored 30 images
+[2026-08-08 11:55:11] [DEBUG] Top score: 34 (matches: 1)
+[2026-08-08 11:55:11] [INFO] SUCCESS: Selected image with score: 34 for post
+[2026-08-08 11:55:11] [DEBUG] Image URL: https://images.unsplash.com/photo-1708373100061-f75279dbaa7f?ixid=M3wxMDAzNDkxfDB8MXxzZWFyY2h8NHx8QU...
+[2026-08-08 11:55:33] [SUCCESS] Featured image set successfully for post ID: 3472
+[2026-08-08 11:55:33] [SUCCESS] Featured image set successfully for post ID: 3472
+[2026-08-08 11:55:33] [SUCCESS] Post published successfully. ID: 3472, Title: Is AI for Small Businesses Actually Worth the Hype? A Candid Guide
+[2026-08-08 11:55:33] [ERROR] IndexNow: Post 3472 submission failed. Errors: 
+[2026-08-08 11:55:33] [SUCCESS] Post published successfully. Post ID: 3472

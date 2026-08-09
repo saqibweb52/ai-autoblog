@@ -245,10 +245,13 @@ class AIA_AI_Settings {
                     </table>
                 </div>
                 
-                <!-- ============ TAVILY SETTINGS ============ -->
+            
                 <div class="aia-settings-section">
                     <h2>🔍 Tavily Search API Settings</h2>
-                    <p class="description">Tavily provides web search capabilities for AI-powered research and content generation.</p>
+                    <p class="description">
+                        Tavily provides web search capabilities for AI-powered research and content generation.
+                        <strong>Search depth is automatically determined</strong> by the AI planner based on each query's complexity.
+                    </p>
                     <table class="form-table">
                         <tr>
                             <th scope="row">
@@ -256,12 +259,12 @@ class AIA_AI_Settings {
                             </th>
                             <td>
                                 <input type="password" 
-                                       name="aia_tavily_api_key" 
-                                       id="aia_tavily_api_key" 
-                                       value="<?php echo esc_attr($tavily_api_key); ?>"
-                                       class="regular-text"
-                                       autocomplete="off"
-                                       placeholder="Enter your Tavily API key">
+                                    name="aia_tavily_api_key" 
+                                    id="aia_tavily_api_key" 
+                                    value="<?php echo esc_attr($tavily_api_key); ?>"
+                                    class="regular-text"
+                                    autocomplete="off"
+                                    placeholder="Enter your Tavily API key">
                                 <p class="description">
                                     <a href="https://app.tavily.com/sign-in" target="_blank">Get your Tavily API key</a>
                                 </p>
@@ -274,29 +277,20 @@ class AIA_AI_Settings {
                         </tr>
                         <tr>
                             <th scope="row">
-                                <label for="aia_tavily_search_depth">Search Depth</label>
-                            </th>
-                            <td>
-                                <select name="aia_tavily_search_depth" id="aia_tavily_search_depth">
-                                    <option value="basic" <?php selected($tavily_search_depth, 'basic'); ?>>Basic (Faster, lower cost)</option>
-                                    <option value="advanced" <?php selected($tavily_search_depth, 'advanced'); ?>>Advanced (More thorough, higher cost)</option>
-                                </select>
-                                <p class="description">Advanced mode provides more comprehensive search results with additional context.</p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">
-                                <label for="aia_tavily_max_results">Max Results</label>
+                                <label for="aia_tavily_max_results">Max Results Per Query</label>
                             </th>
                             <td>
                                 <input type="number" 
-                                       name="aia_tavily_max_results" 
-                                       id="aia_tavily_max_results" 
-                                       value="<?php echo esc_attr($tavily_max_results); ?>"
-                                       min="1"
-                                       max="20"
-                                       class="small-text">
-                                <p class="description">Maximum number of search results to return (1-20)</p>
+                                    name="aia_tavily_max_results" 
+                                    id="aia_tavily_max_results" 
+                                    value="<?php echo esc_attr($tavily_max_results); ?>"
+                                    min="1"
+                                    max="20"
+                                    class="small-text">
+                                <p class="description">Maximum number of search results to return per query (1-20).</p>
+                                <p class="description" style="color: #666; font-size: 12px; margin-top: 3px;">
+                                    💡 The AI planner automatically decides which queries use <strong>basic</strong> (faster) vs <strong>advanced</strong> (more thorough) search depth.
+                                </p>
                             </td>
                         </tr>
                         <tr>

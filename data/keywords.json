@@ -185,5 +185,25 @@
         ],
         "status": "done",
         "created_at": "2026-08-06 08:48:41"
+    },
+    {
+        "id": "kw_6a770fa10fc8c3.52418772",
+        "keyword": "AI for marketing",
+        "author_id": 1,
+        "categories": [
+            33
+        ],
+        "status": "done",
+        "created_at": "2026-08-08 11:14:41"
+    },
+    {
+        "id": "kw_6a7718c822e9a6.57312417",
+        "keyword": "AI for small businesses",
+        "author_id": 1,
+        "categories": [
+            33
+        ],
+        "status": "done",
+        "created_at": "2026-08-08 11:53:44"
     }
 ]

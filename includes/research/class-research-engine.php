@@ -19,25 +19,25 @@ class AIA_Research_Engine {
 
     /**
      * Main entry: perform research on a keyword.
+     * Search depth is determined dynamically by the planner.
      *
      * @param string $keyword
      * @param int    $max_queries
-     * @param string $search_depth  'basic' or 'advanced'
      * @param int    $max_results_per_query
      * @return array|false  Research package or false on failure.
      */
-    public function research($keyword, $max_queries = 6, $search_depth = 'basic', $max_results_per_query = 5) {
+    public function research($keyword, $max_queries = 6, $max_results_per_query = 5) {
         $this->logger->log("Starting research for keyword: '{$keyword}'", 'info');
 
-        // 1. Generate queries
-        $queries = $this->planner->generate_queries($keyword, $max_queries);
-        if (empty($queries)) {
+        // 1. Generate queries with dynamic depth
+        $queries_with_depth = $this->planner->get_queries_with_depth($keyword, $max_queries);
+        if (empty($queries_with_depth)) {
             $this->logger->log("No search queries generated for '{$keyword}'", 'error');
             return false;
         }
 
-        // 2. Execute
-        $responses = $this->executor->execute($queries, $search_depth, $max_results_per_query);
+        // 2. Execute with per-query depth
+        $responses = $this->executor->execute_with_depth($queries_with_depth, $max_results_per_query);
         if (empty($responses)) {
             $this->logger->log("No search results for '{$keyword}'", 'error');
             return false;

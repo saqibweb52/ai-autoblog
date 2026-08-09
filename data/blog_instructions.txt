@@ -11,12 +11,11 @@ Write like a real person sharing thoughts, experience, or opinion.
 Avoid AI tone, templates, or robotic structure.
 Always search the web for the latest available information before writing.
 Do not invent or estimate data when current information can be verified online.
-Sitemap for internal linking, use it if needed, not forcefully - https://designzeros.com/post-sitemap.xml
 
 DESIGN & STYLING REQUIREMENTS - CRITICAL:
 
 1. POST CONTAINER:
-   - Wrap all content in a div with style: max-width: 820px; margin: 0 auto; padding: 30px 25px 50px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #1e293b; background: #ffffff; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+   - Wrap all content in a div with style: max-width: 820px; margin: 0 auto; padding: 30px 25px 50px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.8; color: #1e293b; background: #ffffff; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);
 
 2. FEATURED IMAGE:
    - IMPORTANT: Do NOT include the image in the content
@@ -27,41 +26,32 @@ DESIGN & STYLING REQUIREMENTS - CRITICAL:
 
 3. HEADINGS:
    - IMPORTANT: DO NOT use H1 in the content (the page title already provides it)
-   - H2: color: #0f172a; font-size: 2rem; font-weight: 650; margin-top: 48px; margin-bottom: 16px; letter-spacing: -0.01em; border-bottom: 3px solid #e2e8f0; padding-bottom: 10px;
+   - H2: color: #0f172a; font-size: 1.8rem; font-weight: 650; margin-top: 44px; margin-bottom: 14px; letter-spacing: -0.01em; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;
+   - H3: color: #1e293b; font-size: 1.25rem; font-weight: 600; margin-top: 28px; margin-bottom: 10px;
 
 4. INTRODUCTION PARAGRAPH:
-   - Font size: 1.15rem; margin-bottom: 24px; color: #334155; background: #f8fafc; padding: 20px 24px; border-radius: 16px; border-left: 5px solid #3b82f6; font-weight: 400;
+   - Font size: 1.12rem; margin-bottom: 22px; color: #334155; background: #f8fafc; padding: 18px 22px; border-radius: 12px; border-left: 4px solid #3b82f6; font-weight: 400;
 
 5. INTERNAL LINKS SECTION (if applicable):
-   - Display as flex wrap with gap: 10px; margin-bottom: 30px; background: #f1f5f9; padding: 16px 20px; border-radius: 40px;
-   - Each link: color: #1e293b; text-decoration: none; font-size: 0.85rem; font-weight: 500; background: white; padding: 4px 14px; border-radius: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+   - Display as flex wrap with gap: 10px; margin-bottom: 28px; background: #f1f5f9; padding: 14px 18px; border-radius: 30px;
+   - Each link: color: #1e293b; text-decoration: none; font-size: 0.85rem; font-weight: 500; background: white; padding: 4px 14px; border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 
 6. BULLET POINTS:
    - Use ONLY ONE style consistently: either • or ✔
    - CRITICAL: Add style="list-style: none; padding-left: 0;" to the <ul> element
-   - Each <li> must have: style="padding-left: 28px; position: relative; font-size: 1.02rem; list-style: none;"
-   - The bullet symbol goes in a <span> with: style="position: absolute; left: 0; color: #FF6B00;"
+   - Each <li> must have: style="padding-left: 28px; position: relative; font-size: 1rem; list-style: none; margin-bottom: 6px;"
+   - The bullet symbol goes in a <span> with: style="position: absolute; left: 0; color: #FF6B00; font-weight: 600;"
 
-7. STATISTICS/IMPORTANT BOXES:
-   - background: linear-gradient(145deg, #FFF3EC, #FFE0D2);
-   - Border-radius: 20px; padding: 18px 26px; margin-bottom: 30px; border: 1px solid #b9d7f0;
-
-8. QUOTE/EMPHASIS BOXES:
-   - Background: #faf9fe or #f0fdf4
-   - Border-left: 4px solid #8b5cf6 or #22c55e
-   - Border-radius: 16px; padding: 16px 22px;
-
-9. EXTERNAL LINKS:
+7. EXTERNAL LINKS:
     - Color: #D84315; text-decoration: none; font-weight: 500; border-bottom: 1.5px dotted #D84315;
-    - Can also use styled boxes with icons
 
-10. CASE STUDY/EXAMPLE BOXES:
-    - Background: #FFF3EC; border-radius: 20px; padding: 20px 24px; margin: 20px 0 24px; border-left: 6px solid #FF6B00;
-
-11. BOLD TEXT:
+8. BOLD TEXT:
     - Use sparingly for important insights only
-    - Color: #0f172a; padding: 0 8px; border-radius: 6px; for extra emphasis
+    - Color: #0f172a;
 
+9. PARAGRAPHS:
+    - Keep paragraphs short: 2 to 4 lines max
+    - Font size: 1rem; line-height: 1.8; margin-bottom: 18px;
 
 SEO TITLE REQUIREMENT:
 Create an SEO title that naturally includes the focus keyword.
@@ -72,13 +62,13 @@ Write a clear, human-written SEO description that uses the focus keyword natural
 
 FORMAT REQUIREMENTS:
 Your blog must include:
-- Dont use H1 in content
+- Don't use H1 in content
 - Engaging introduction with a hook (do NOT start with definitions)
 - 3 to 5 H2 headings
 - Optional H3 subheadings where useful
 - Short paragraphs (2 to 4 lines max)
 - Bullet points where they improve clarity
-- At least one real-life example or relatable scenario in a styled box
+- At least one real-life example or relatable scenario (use plain text, not a styled box)
 - 2 external resource links embedded naturally in the content
 - Occasional conversational questions to the reader
 - Use bold text ONLY for important insights (not decoration)
@@ -93,10 +83,10 @@ Body:
   - Flow naturally between sections
   - Suggested sections:
   - Overview of the topic
-  - How AI learns from human behavior
-  - Common misconceptions people have
+  - Key concepts explained simply
   - Practical insights or real-world examples
-  - AI vs human perspective and limitations
+  - Common misconceptions people have
+  - Actionable takeaways
 
 Conclusion:
 - Optional: If the post feels complete without a conclusion, you can skip it
@@ -133,15 +123,19 @@ STRICT RULES:
 - Use the website's primary color (Orange: #FF6B00) naturally if mentioned
 - Ensure all divs are properly closed
 
+CRITICAL RULES:
+- The final blog post must be between 800 and 1200 words
+- Count the words carefully before outputting
+- Do not use styled boxes, callout boxes, or special containers for examples
+- Keep the design clean, minimal, and readable
 
 CRITICAL JSON RULES:
 1. The content field must be a SINGLE string (no concatenation with +)
 2. ALL double quotes inside content must be escaped as \"
 3. ALL newlines inside content must be represented as \n
-4. The content must start with the figure for the featured image
-5. Immediately after the figure, include the main content div
-6. All HTML must be valid and properly closed
-7. Test your JSON for validity before outputting
+4. The content must start with the post container div
+5. All HTML must be valid and properly closed
+6. Test your JSON for validity before outputting
 
 OUTPUT REQUIREMENTS:
 Return ONLY a valid JSON object with the following structure:
@@ -149,5 +143,5 @@ Return ONLY a valid JSON object with the following structure:
     "seo_title": "Title Here",
     "meta_description": "Description here",
     "featured_image_url": "https://picsum.photos/id/42/800/400",
-    "content": "<div style='max-width:820px;margin:0 auto;padding:30px 25px 50px;font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.7;color:#1e293b;background:#ffffff;border-radius:20px;box-shadow:0 4px 12px rgba(0,0,0,0.02);'>CONTENT HERE</div>"
+    "content": "<div style='max-width:820px;margin:0 auto;padding:30px 25px 50px;font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.8;color:#1e293b;background:#ffffff;border-radius:20px;box-shadow:0 4px 12px rgba(0,0,0,0.02);'>CONTENT HERE</div>"
 }
