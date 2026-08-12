@@ -1,6 +1,6 @@
-# 🤖 AI Autoblog WordPress Plugin
+# 🤖 Blog Autom WordPress Plugin
 
-**AI Autoblog** is a powerful WordPress plugin that automatically generates SEO-optimized blog posts using AI. It supports **Google Gemini** and **Zhipu AI (GLM)**, includes AI-powered image search, automatic IndexNow submission, and a complete keyword management system.
+**Blog Autom** is a powerful WordPress plugin that automatically generates SEO-optimized blog posts using AI. It supports **Google Gemini** and **Zhipu AI (GLM)**, includes AI-powered image search, automatic IndexNow submission, and a complete keyword management system.
 
 ---
 
@@ -102,17 +102,17 @@
 
 ### 2. Configure the Plugin
 
-- **AI Autoblog → AI Settings**
+- **Blog Autom → AI Settings**
   - Add your AI API key
 
-- **AI Autoblog → Image Settings**
+- **Blog Autom → Image Settings**
   - Add your Unsplash API key
 
 ### 3. Add Keywords
 
 Navigate to:
 
-**AI Autoblog → Keywords**
+**Blog Autom → Keywords**
 
 Add:
 
@@ -130,7 +130,7 @@ Add:
 
 Navigate to:
 
-**AI Autoblog → Manual Generate**
+**Blog Autom → Manual Generate**
 
 ---
 

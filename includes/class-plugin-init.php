@@ -20,6 +20,7 @@ class AIA_Plugin_Init {
             'class-images.php',
             'class-publisher.php',
             'class-cron.php',
+            'class-cron-async.php',
             'class-logger.php',
             'class-indexnow.php',
             'class-process-logger.php'
@@ -65,12 +66,16 @@ class AIA_Plugin_Init {
     }
 
     private function init_cron() {
-        $cron = new AIA_Cron_Handler();
+        // Use async handler for non-blocking processing
+        $cron = new AIA_Cron_Handler_Async();
+        
+        // Hook the cron event to the async handler
         add_action('aia_process_keywords', array($cron, 'process_keyword_queue'));
         add_action('aia_sync_sitemaps', 'aia_sync_sitemaps_callback');
 
+        // Schedule cron - runs every 120 minutes (2 hours)
         if (!wp_next_scheduled('aia_process_keywords')) {
-            wp_schedule_event(time(), 'every_minute', 'aia_process_keywords');
+            wp_schedule_event(time(), 'every_120_minutes', 'aia_process_keywords');
         }
         if (!wp_next_scheduled('aia_sync_sitemaps')) {
             wp_schedule_event(time(), 'daily', 'aia_sync_sitemaps');
@@ -80,16 +85,42 @@ class AIA_Plugin_Init {
     }
 
     public function add_cron_interval($schedules) {
+        // Custom interval: 120 minutes (7200 seconds)
+        $schedules['every_120_minutes'] = array(
+            'interval' => 7200, // 120 minutes = 120 * 60 = 7200 seconds
+            'display' => __('Every 120 Minutes (2 Hours)', 'ai-autoblog')
+        );
+        
+        // Keep other intervals for flexibility
+        $schedules['every_5_minutes'] = array(
+            'interval' => 300,
+            'display' => __('Every 5 Minutes', 'ai-autoblog')
+        );
+        $schedules['every_30_minutes'] = array(
+            'interval' => 1800,
+            'display' => __('Every 30 Minutes', 'ai-autoblog')
+        );
+        $schedules['every_60_minutes'] = array(
+            'interval' => 3600,
+            'display' => __('Every 60 Minutes', 'ai-autoblog')
+        );
         $schedules['every_minute'] = array(
             'interval' => 60,
             'display' => __('Every Minute', 'ai-autoblog')
         );
+        
         return $schedules;
     }
 
     private function register_hooks() {
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
         add_action('admin_menu', array($this, 'reorder_admin_menu'), 999);
+        
+        // Track last cron run for monitoring
+        add_action('aia_process_keywords', array($this, 'track_cron_run'), 1);
+        
+        // Admin notice for cron health
+        add_action('admin_notices', array($this, 'cron_health_notice'));
     }
 
     public function reorder_admin_menu() {
@@ -174,6 +205,49 @@ class AIA_Plugin_Init {
         </script>
         <style>.aia-indexnow-sync{font-size:11px!important;padding:0 6px!important;line-height:1.5!important;min-height:20px!important;}</style>
         <?php
+    }
+
+    /**
+     * Track when cron runs for monitoring
+     */
+    public function track_cron_run() {
+        update_option('aia_last_cron_run', time());
+    }
+
+    /**
+     * Show admin notice if cron hasn't run recently
+     */
+    public function cron_health_notice() {
+        // Only show to admins
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        // Only show on plugin pages
+        $screen = get_current_screen();
+        if (!$screen || strpos($screen->id, 'ai-autoblog') === false) {
+            return;
+        }
+
+        $last_run = get_option('aia_last_cron_run', 0);
+        // Show warning if it's been more than 4 hours (since cron runs every 2 hours)
+        if ($last_run && (time() - $last_run) > 14400) { // 4 hours
+            ?>
+            <div class="notice notice-warning is-dismissible">
+                <p>
+                    <strong>Blog Autom - Cron Warning:</strong> 
+                    The content generation cron hasn't run in over 4 hours. 
+                    <?php if (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON): ?>
+                        Please check your system cron configuration.
+                    <?php else: ?>
+                        Make sure you have visitor traffic to trigger WP-Cron, or consider setting up a system cron.
+                    <?php endif; ?>
+                    <br>
+                    <small>Last run: <?php echo $last_run ? date('Y-m-d H:i:s', $last_run) : 'Never'; ?></small>
+                </p>
+            </div>
+            <?php
+        }
     }
 }
 

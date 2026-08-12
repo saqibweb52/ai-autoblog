@@ -161,24 +161,6 @@ class AIA_AI_Settings {
                                 <span id="aia_gemini_test_result" style="margin-left: 10px;"></span>
                             </td>
                         </tr>
-                        <tr>
-                            <th scope="row">
-                                <label for="aia_enable_grounding">Enable Grounding / Web Search</label>
-                            </th>
-                            <td>
-                                <input type="checkbox" 
-                                       name="aia_enable_grounding" 
-                                       id="aia_enable_grounding" 
-                                       value="1"
-                                       <?php checked($grounding, 1); ?>>
-                                <p class="description">Enable Google Search grounding for Gemini</p>
-                                <?php if ($ai_provider === 'gemini'): ?>
-                                    <p class="description" style="color: #856404; background: #fff3cd; padding: 8px 12px; border-radius: 4px; margin-top: 5px;">
-                                        Note: Grounding is available for the Gemini 2.5 and 3.x Flash models.
-                                    </p>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
                     </table>
                 </div>
                 

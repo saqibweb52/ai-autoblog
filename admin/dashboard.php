@@ -11,15 +11,15 @@ class AIA_Admin_Dashboard {
     }
 
     public function add_admin_menu() {
-        add_menu_page(
-            'AI Autoblog',
-            'AI Autoblog',
-            'manage_options',
-            'ai-autoblog',
-            array($this, 'render_dashboard'),
-            'dashicons-robot',
-            30
-        );
+    add_menu_page(
+        'Blog Autom',
+        'Blog Autom',
+        'manage_options',
+        'ai-autoblog',
+        array($this, 'render_dashboard'),
+        'data:image/svg+xml;base64,' . base64_encode(file_get_contents(AIA_PLUGIN_DIR . 'assets/icon.svg')),
+        30
+    );
     }
 
     public function render_dashboard() {
@@ -29,7 +29,7 @@ class AIA_Admin_Dashboard {
 
         ?>
         <div class="wrap aia-dashboard">
-            <h1>AI Autoblog Dashboard</h1>
+            <h1>Dashboard</h1>
 
             <div class="aia-stats-grid">
                 <div class="aia-stat-card">

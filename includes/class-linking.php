@@ -286,12 +286,14 @@ class AIA_Link_Manager {
                 'anchor' => $anchor,
                 'url' => $match['url'],
                 'relevance' => $match['relevance'],
-                'post_id' => $match['post']->ID
+                'post_id' => $match['post']->ID,
+                'title' => $match['post']->post_title,
+                'content_preview' => substr(strip_tags($match['post']->post_content), 0, 300)
             ];
             $logger->log("Internal candidate: '{$anchor}' -> {$match['url']}", 'debug');
         }
 
-        $content = $this->insert_links_naturally($content, $candidates, $this->max_internal_links, 'internal', $logger);
+        $content = $this->insert_links_with_ai($content, $candidates, $this->max_internal_links, 'internal', $logger);
         return $content;
     }
 
@@ -312,17 +314,19 @@ class AIA_Link_Manager {
             $candidates[] = [
                 'anchor' => $link['anchor'],
                 'url' => $link['url'],
-                'relevance' => $link['relevance']
+                'relevance' => $link['relevance'],
+                'title' => $link['anchor'],
+                'content_preview' => ''
             ];
             $logger->log("External candidate: '{$link['anchor']}' -> {$link['url']}", 'debug');
         }
 
-        $content = $this->insert_links_naturally($content, $candidates, $this->max_external_links, 'external', $logger);
+        $content = $this->insert_links_with_ai($content, $candidates, $this->max_external_links, 'external', $logger);
         return $content;
     }
 
-    // ========== NATURAL LINK INSERTION (FIXED - Uses DOMDocument) ==========
-    public function insert_links_naturally($content, $candidates, $max_links, $type = 'internal', $logger = null) {
+    // ========== AI-POWERED LINK INSERTION ==========
+    public function insert_links_with_ai($content, $candidates, $max_links, $type = 'internal', $logger = null) {
         if (empty($content) || empty($candidates) || $max_links == 0) {
             return $content;
         }
@@ -332,125 +336,372 @@ class AIA_Link_Manager {
         }
 
         $links_inserted = 0;
-        $dom = new DOMDocument();
-        libxml_use_internal_errors(true);
         
-        // Load HTML with proper encoding
-        $dom->loadHTML('<?xml encoding="UTF-8">' . $content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        libxml_clear_errors();
-
-        // Sort candidates by relevance (highest first)
+        // Sort candidates by relevance
         usort($candidates, function($a, $b) {
-            $rel_a = $a['relevance'] ?? 0;
-            $rel_b = $b['relevance'] ?? 0;
-            return $rel_b - $rel_a;
+            return ($b['relevance'] ?? 0) - ($a['relevance'] ?? 0);
         });
 
-        $xpath = new DOMXPath($dom);
+        // Prepare content for AI analysis
+        $clean_content = strip_tags($content);
+        $sentences = $this->split_into_sentences($clean_content);
         
         foreach ($candidates as $candidate) {
             if ($links_inserted >= $max_links) {
                 break;
             }
 
-            $anchor = trim($candidate['anchor']);
             $url = trim($candidate['url']);
+            $anchor_text = trim($candidate['anchor']);
+            $title = trim($candidate['title'] ?? $anchor_text);
             
-            if (empty($anchor) || empty($url)) {
+            if (empty($url) || empty($anchor_text)) {
                 continue;
             }
 
-            // Find all text nodes that contain the anchor (case-insensitive)
-            $text_nodes = $xpath->query("//text()[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '" . strtolower($anchor) . "')]");
+            // Use AI to find the best placement
+            $ai_result = $this->analyze_placement_with_ai($content, $anchor_text, $title, $candidate['content_preview'] ?? '');
             
-            if ($text_nodes->length === 0) {
-                $logger->log("Anchor '{$anchor}' not found in content, skipping", 'debug');
-                continue;
-            }
-
-            $found = false;
-            foreach ($text_nodes as $node) {
-                // Skip if this text node is inside an <a> tag
-                $parent = $node->parentNode;
-                $is_in_link = false;
-                while ($parent) {
-                    if ($parent->nodeName === 'a') {
-                        $is_in_link = true;
-                        break;
-                    }
-                    $parent = $parent->parentNode;
-                }
-                if ($is_in_link) {
-                    continue;
-                }
-
-                $text = $node->wholeText;
-                $pos = stripos($text, $anchor);
-                if ($pos !== false) {
-                    // Found a text node with the anchor
-                    // We'll split the text node and insert the link
-                    $before = substr($text, 0, $pos);
-                    $after = substr($text, $pos + strlen($anchor));
-
-                    // Create the new nodes
-                    $fragment = $dom->createDocumentFragment();
-                    if ($before !== '') {
-                        $fragment->appendChild($dom->createTextNode($before));
-                    }
-
-                    // Create the link element
-                    $link = $dom->createElement('a');
-                    $link->setAttribute('href', $url);
-                    if ($type === 'external') {
-                        $link->setAttribute('rel', 'nofollow noopener');
-                        $link->setAttribute('target', '_blank');
-                    }
-                    $link->setAttribute('class', 'aia-' . $type . '-link');
-                    $link->appendChild($dom->createTextNode($anchor));
-                    $fragment->appendChild($link);
-
-                    if ($after !== '') {
-                        $fragment->appendChild($dom->createTextNode($after));
-                    }
-
-                    // Replace the original text node with the fragment
-                    $node->parentNode->replaceChild($fragment, $node);
-
+            if ($ai_result && isset($ai_result['matched_text']) && !empty($ai_result['matched_text'])) {
+                // Insert link using the AI-matched text
+                $content = $this->insert_link_at_text($content, $ai_result['matched_text'], $url, $type, $logger);
+                $links_inserted++;
+                $logger->log("AI inserted {$type} link: '{$ai_result['matched_text']}' -> {$url}", 'success');
+            } else {
+                // Fallback: try to find a sentence
+                $best_sentence = $this->find_best_sentence_for_link($sentences, $anchor_text);
+                if ($best_sentence) {
+                    $content = $this->wrap_sentence_with_link($content, $best_sentence, $url, $type, $logger);
                     $links_inserted++;
-                    $logger->log("Inserted {$type} link: '{$anchor}' -> {$url} ({$links_inserted}/{$max_links})", 'success');
-                    $found = true;
-                    break; // Exit text node loop after first replacement
-                }
-            }
-
-            if (!$found) {
-                $logger->log("Could not insert link for anchor '{$anchor}'", 'debug');
-            }
-        }
-
-        // Save the modified HTML
-        $new_content = '';
-        $body = $dom->getElementsByTagName('body');
-        if ($body->length > 0) {
-            $body_node = $body->item(0);
-            foreach ($body_node->childNodes as $child) {
-                $new_content .= $dom->saveHTML($child);
-            }
-        } else {
-            // Fallback: get all children of the root
-            $root = $dom->documentElement;
-            if ($root) {
-                foreach ($root->childNodes as $child) {
-                    $new_content .= $dom->saveHTML($child);
+                    $logger->log("Inserted {$type} link (fallback): '{$best_sentence}' -> {$url}", 'success');
+                } else {
+                    $logger->log("Could not insert link for '{$anchor_text}'", 'debug');
                 }
             }
         }
 
         $logger->log("Inserted {$links_inserted} {$type} links out of {$max_links} max", 'debug');
-        return $new_content;
+        return $content;
     }
 
-    // ========== GET ALL PUBLISHED CONTENT (PUBLIC) ==========
+    /**
+     * Use AI to analyze the best placement for a link
+     */
+    private function analyze_placement_with_ai($content, $anchor_text, $title, $content_preview) {
+        $logger = new AIA_Logger();
+        $logger->log("AI analyzing placement for: '{$anchor_text}'", 'debug');
+        
+        // Prepare the content for analysis (limit to reasonable size)
+        $clean_content = strip_tags($content);
+        if (strlen($clean_content) > 3000) {
+            $clean_content = substr($clean_content, 0, 3000) . '...';
+        }
+        
+        // Build the AI prompt
+        $prompt = $this->build_link_analysis_prompt($clean_content, $anchor_text, $title, $content_preview);
+        
+        // Call AI provider
+        $ai_response = $this->call_ai_for_link_analysis($prompt);
+        
+        if ($ai_response) {
+            $logger->log("AI response received for link analysis", 'debug');
+            return $this->parse_ai_response($ai_response);
+        }
+        
+        $logger->log("AI analysis failed for '{$anchor_text}'", 'warning');
+        return null;
+    }
+
+    /**
+     * Build the AI prompt for link analysis
+     */
+    private function build_link_analysis_prompt($content, $anchor_text, $title, $content_preview) {
+        $prompt = <<<EOT
+You are an expert content editor specializing in natural link placement.
+
+I need you to find the BEST place to insert a link in the following content.
+
+LINK INFORMATION:
+- Anchor Text: "{$anchor_text}"
+- Target Page Title: "{$title}"
+- Target Page Preview: "{$content_preview}"
+
+CONTENT TO ANALYZE:
+{$content}
+
+INSTRUCTIONS:
+1. Find the most natural place in the content where this link would fit best
+2. The link should be placed on EXISTING TEXT that is already discussing related concepts
+3. Do NOT add new text - only wrap existing text with the link
+4. The linked text should be a natural phrase (3-10 words) that flows with the sentence
+5. The link should add value to the reader by providing additional information
+
+OUTPUT FORMAT (JSON only):
+{
+    "matched_text": "The exact text from the content to wrap with the link",
+    "reason": "Brief explanation of why this is the best placement",
+    "confidence": 0-100 score
+}
+
+If no suitable placement exists, return:
+{
+    "matched_text": "",
+    "reason": "No suitable placement found",
+    "confidence": 0
+}
+
+Return ONLY valid JSON. No other text.
+EOT;
+        return $prompt;
+    }
+
+    /**
+     * Call AI for link analysis
+     */
+    private function call_ai_for_link_analysis($prompt) {
+        $provider = get_option('aia_ai_provider', 'gemini');
+        
+        if ($provider === 'gemini') {
+            return $this->call_gemini_for_analysis($prompt);
+        } else {
+            return $this->call_glm_for_analysis($prompt);
+        }
+    }
+
+    /**
+     * Call Gemini for link analysis
+     */
+    private function call_gemini_for_analysis($prompt) {
+        $api_key = get_option('aia_api_key', '');
+        $model = get_option('aia_gemini_model', 'gemini-2.0-flash');
+        
+        if (empty($api_key)) {
+            return false;
+        }
+
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$api_key}";
+        $body = [
+            'contents' => [
+                ['parts' => [['text' => $prompt]]]
+            ]
+        ];
+        
+        $response = wp_remote_post($url, [
+            'headers' => ['Content-Type' => 'application/json'],
+            'body' => json_encode($body),
+            'timeout' => 30
+        ]);
+        
+        if (is_wp_error($response)) {
+            return false;
+        }
+        
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (isset($data['error'])) {
+            return false;
+        }
+        
+        return $data['candidates'][0]['content']['parts'][0]['text'] ?? false;
+    }
+
+    /**
+     * Call GLM for link analysis
+     */
+    private function call_glm_for_analysis($prompt) {
+        $api_key = get_option('aia_glm_api_key', '');
+        $model = get_option('aia_glm_model', 'glm-4-flash');
+        
+        if (empty($api_key)) {
+            return false;
+        }
+
+        $url = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+        $body = [
+            'model' => $model,
+            'messages' => [['role' => 'user', 'content' => $prompt]],
+            'temperature' => 0.3,
+            'max_tokens' => 500
+        ];
+        
+        $response = wp_remote_post($url, [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $api_key
+            ],
+            'body' => json_encode($body),
+            'timeout' => 30
+        ]);
+        
+        if (is_wp_error($response)) {
+            return false;
+        }
+        
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (isset($data['error'])) {
+            return false;
+        }
+        
+        return $data['choices'][0]['message']['content'] ?? false;
+    }
+
+    /**
+     * Parse AI response
+     */
+    private function parse_ai_response($response) {
+        // Try to extract JSON
+        $json = $this->extract_json_from_response($response);
+        
+        if ($json && isset($json['matched_text']) && !empty($json['matched_text']) && $json['confidence'] > 50) {
+            return [
+                'matched_text' => trim($json['matched_text']),
+                'reason' => $json['reason'] ?? '',
+                'confidence' => intval($json['confidence'] ?? 0)
+            ];
+        }
+        
+        return null;
+    }
+
+    /**
+     * Extract JSON from AI response
+     */
+    private function extract_json_from_response($response) {
+        // Remove markdown code fences
+        $response = preg_replace('/```json\s*/', '', $response);
+        $response = preg_replace('/```\s*/', '', $response);
+        $response = trim($response);
+        
+        // Try to parse as JSON
+        $data = json_decode($response, true);
+        if ($data && is_array($data)) {
+            return $data;
+        }
+        
+        // Try to find JSON in the response
+        if (preg_match('/\{[^{}]*"matched_text"[^{}]*\}/s', $response, $matches)) {
+            $json = $this->fix_json_string($matches[0]);
+            $data = json_decode($json, true);
+            if ($data && is_array($data)) {
+                return $data;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Fix common JSON issues
+     */
+    private function fix_json_string($json) {
+        // Remove trailing commas
+        $json = preg_replace('/,\s*}/', '}', $json);
+        $json = preg_replace('/,\s*\]/', ']', $json);
+        
+        // Unescape double quotes
+        $json = str_replace('\"', '"', $json);
+        
+        return $json;
+    }
+
+    /**
+     * Insert link at specific text
+     */
+    private function insert_link_at_text($content, $text_to_link, $url, $type, $logger = null) {
+        $escaped_text = preg_quote($text_to_link, '/');
+        
+        // Check if already linked
+        if (preg_match('/<a[^>]*>' . $escaped_text . '<\/a>/i', $content)) {
+            return $content;
+        }
+        
+        // Create the link
+        $rel_attr = ($type === 'external') ? ' rel="nofollow noopener" target="_blank"' : '';
+        $class_attr = ' class="aia-' . $type . '-link"';
+        $link_html = '<a href="' . esc_url($url) . '"' . $rel_attr . $class_attr . '>' . $text_to_link . '</a>';
+        
+        // Replace the text
+        $content = preg_replace('/' . $escaped_text . '/', $link_html, $content, 1);
+        
+        return $content;
+    }
+
+    /**
+     * Split content into sentences
+     */
+    private function split_into_sentences($text) {
+        $sentences = preg_split('/(?<=[.!?])\s+/', $text);
+        return array_filter($sentences, function($s) {
+            return strlen(trim($s)) > 10;
+        });
+    }
+
+    /**
+     * Find the best sentence for a link (fallback)
+     */
+    private function find_best_sentence_for_link($sentences, $anchor_text) {
+        $best_score = 0;
+        $best_sentence = null;
+        
+        $anchor_words = array_filter(explode(' ', strtolower($anchor_text)));
+        $anchor_words = array_filter($anchor_words, function($w) {
+            return strlen($w) > 3;
+        });
+        
+        foreach ($sentences as $sentence) {
+            $sentence_lower = strtolower($sentence);
+            $score = 0;
+            
+            // Check if already linked
+            if (preg_match('/<a[^>]*>/i', $sentence)) {
+                continue;
+            }
+            
+            foreach ($anchor_words as $word) {
+                if (strpos($sentence_lower, $word) !== false) {
+                    $score += 10;
+                }
+            }
+            
+            $word_count = str_word_count($sentence);
+            if ($word_count >= 5 && $word_count <= 20) {
+                $score += 3;
+            }
+            
+            if ($score > $best_score) {
+                $best_score = $score;
+                $best_sentence = trim($sentence);
+            }
+        }
+        
+        return ($best_score >= 10) ? $best_sentence : null;
+    }
+
+    /**
+     * Wrap a sentence with a link (fallback)
+     */
+    private function wrap_sentence_with_link($content, $sentence, $url, $type, $logger = null) {
+        $escaped_sentence = preg_quote($sentence, '/');
+        
+        if (preg_match('/\b' . $escaped_sentence . '\b/', $content, $matches)) {
+            $found_sentence = $matches[0];
+            
+            if (preg_match('/<a[^>]*>' . preg_quote($found_sentence, '/') . '<\/a>/i', $content)) {
+                return $content;
+            }
+            
+            $rel_attr = ($type === 'external') ? ' rel="nofollow noopener" target="_blank"' : '';
+            $class_attr = ' class="aia-' . $type . '-link"';
+            $link_html = '<a href="' . esc_url($url) . '"' . $rel_attr . $class_attr . '>' . $found_sentence . '</a>';
+            
+            $content = preg_replace('/\b' . preg_quote($found_sentence, '/') . '\b/', $link_html, $content, 1);
+        }
+        
+        return $content;
+    }
+
+    // ========== GET ALL PUBLISHED CONTENT ==========
     public function get_all_published_content($exclude_id = null) {
         global $wpdb;
         $exclude = $exclude_id ? intval($exclude_id) : 0;
@@ -468,7 +719,7 @@ class AIA_Link_Manager {
         return $wpdb->get_results($query);
     }
 
-    // ========== FIND RELEVANT INTERNAL LINKS (PUBLIC) ==========
+    // ========== FIND RELEVANT INTERNAL LINKS ==========
     public function find_relevant_internal_links($keyword, $all_content, $current_post_id) {
         $matches = [];
         $keyword_lower = strtolower($keyword);
@@ -498,7 +749,7 @@ class AIA_Link_Manager {
                 $relevance_score += 5;
             }
             
-            if ($relevance_score >= 3) {
+            if ($relevance_score >= 2) {
                 $matches[] = [
                     'post' => $post,
                     'url' => get_permalink($post->ID),
@@ -514,7 +765,7 @@ class AIA_Link_Manager {
         return $matches;
     }
 
-    // ========== GET INTERNAL LINK ANCHOR (PUBLIC) ==========
+    // ========== GET INTERNAL LINK ANCHOR ==========
     public function get_internal_link_anchor($post, $keyword) {
         $title = $post->post_title;
         $keyword_lower = strtolower($keyword);

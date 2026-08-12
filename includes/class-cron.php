@@ -7,12 +7,12 @@ if (!defined('ABSPATH')) {
 
 class AIA_Cron_Handler {
     
-    private $keywords_manager;
-    private $generator;
-    private $publisher;
-    private $link_manager;
-    private $image_manager;
-    private $logger;
+    protected $keywords_manager;
+    protected $generator;
+    protected $publisher;
+    protected $link_manager;
+    protected $image_manager;
+    protected $logger;
     
     public function __construct() {
         $this->keywords_manager = new AIA_Keywords_Manager();
@@ -23,6 +23,10 @@ class AIA_Cron_Handler {
         $this->logger = new AIA_Logger();
     }
     
+    /**
+     * Process a single keyword from the queue
+     * This is the main processing logic - called by both sync and async handlers
+     */
     public function process_keyword_queue() {
         // Check if processing is allowed
         if (!$this->can_process()) {
@@ -116,7 +120,7 @@ class AIA_Cron_Handler {
         $this->update_runtime_state('idle');
     }
     
-    private function extract_meta_from_content($content) {
+    protected function extract_meta_from_content($content) {
         // Try to find first paragraph
         if (preg_match('/<p[^>]*>(.{50,200})<\/p>/i', $content, $matches)) {
             $first_para = trim(strip_tags($matches[1]));
@@ -134,7 +138,11 @@ class AIA_Cron_Handler {
         return '';
     }
     
-    private function can_process() {
+    /**
+     * Check if we can process - respects daily limit and processing state
+     * Made protected so child classes can access
+     */
+    protected function can_process() {
         $runtime = $this->get_runtime_state();
         
         // Don't process if already processing
@@ -158,7 +166,7 @@ class AIA_Cron_Handler {
         return true;
     }
     
-    private function get_today_posts_count() {
+    protected function get_today_posts_count() {
         global $wpdb;
         
         $today = date('Y-m-d');
@@ -178,7 +186,7 @@ class AIA_Cron_Handler {
         return intval($count);
     }
     
-    private function get_runtime_state() {
+    protected function get_runtime_state() {
         $file = AIA_DATA_DIR . 'runtime_state.json';
         if (file_exists($file)) {
             $content = file_get_contents($file);
@@ -187,7 +195,7 @@ class AIA_Cron_Handler {
         return ['status' => 'idle', 'total_posts' => 0];
     }
     
-    private function update_runtime_state($status, $keyword = null) {
+    protected function update_runtime_state($status, $keyword = null) {
         $state = $this->get_runtime_state();
         $state['status'] = $status;
         $state['last_activity'] = time();
@@ -199,7 +207,7 @@ class AIA_Cron_Handler {
         file_put_contents(AIA_DATA_DIR . 'runtime_state.json', json_encode($state, JSON_PRETTY_PRINT));
     }
     
-    private function increment_total_posts() {
+    protected function increment_total_posts() {
         $state = $this->get_runtime_state();
         $state['total_posts'] = ($state['total_posts'] ?? 0) + 1;
         file_put_contents(AIA_DATA_DIR . 'runtime_state.json', json_encode($state, JSON_PRETTY_PRINT));

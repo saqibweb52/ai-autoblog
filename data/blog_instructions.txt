@@ -30,28 +30,24 @@ DESIGN & STYLING REQUIREMENTS - CRITICAL:
    - H3: color: #1e293b; font-size: 1.25rem; font-weight: 600; margin-top: 28px; margin-bottom: 10px;
 
 4. INTRODUCTION PARAGRAPH:
-   - Font size: 1.12rem; margin-bottom: 22px; color: #334155; background: #f8fafc; padding: 18px 22px; border-radius: 12px; border-left: 4px solid #3b82f6; font-weight: 400;
+   - Font size: 1.22rem; margin-bottom: 22px; color: #334155; background: #f8fafc; padding: 18px 22px; border-radius: 12px; border-left: 4px solid #3b82f6; font-weight: 400;
 
-5. INTERNAL LINKS SECTION (if applicable):
-   - Display as flex wrap with gap: 10px; margin-bottom: 28px; background: #f1f5f9; padding: 14px 18px; border-radius: 30px;
-   - Each link: color: #1e293b; text-decoration: none; font-size: 0.85rem; font-weight: 500; background: white; padding: 4px 14px; border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-
-6. BULLET POINTS:
-   - Use ONLY ONE style consistently: either • or ✔
+5. BULLET POINTS:
+   - Use ONLY ONE style consistently: either ● or ✔
    - CRITICAL: Add style="list-style: none; padding-left: 0;" to the <ul> element
    - Each <li> must have: style="padding-left: 28px; position: relative; font-size: 1rem; list-style: none; margin-bottom: 6px;"
-   - The bullet symbol goes in a <span> with: style="position: absolute; left: 0; color: #FF6B00; font-weight: 600;"
+   - The bullet symbol goes in a <span> with: style="position: absolute; left: 0; color: #FF6B00; font-weight: 800;"
 
-7. EXTERNAL LINKS:
-    - Color: #D84315; text-decoration: none; font-weight: 500; border-bottom: 1.5px dotted #D84315;
+6. EXTERNAL & INTERNAL LINKS:
+    - Color: #007bff; text-decoration: none; font-weight: 500; border-bottom: 1.5px dotted #007bff;
 
-8. BOLD TEXT:
+7. BOLD TEXT:
     - Use sparingly for important insights only
     - Color: #0f172a;
 
-9. PARAGRAPHS:
+8. PARAGRAPHS:
     - Keep paragraphs short: 2 to 4 lines max
-    - Font size: 1rem; line-height: 1.8; margin-bottom: 18px;
+    - Font size: 1.2rem; line-height: 1.7; margin-bottom: 18px;
 
 SEO TITLE REQUIREMENT:
 Create an SEO title that naturally includes the focus keyword.
@@ -69,7 +65,7 @@ Your blog must include:
 - Short paragraphs (2 to 4 lines max)
 - Bullet points where they improve clarity
 - At least one real-life example or relatable scenario (use plain text, not a styled box)
-- 2 external resource links embedded naturally in the content
+- external resource links embedded naturally in the content
 - Occasional conversational questions to the reader
 - Use bold text ONLY for important insights (not decoration)
 
@@ -88,7 +84,7 @@ Body:
   - Practical insights or real-world examples
   - Common misconceptions people have
   - Actionable takeaways
-  - Can Also use a Table if needed.
+  - Must Use a Table if needed a little bit.
 
 Conclusion:
 - Optional: If the post feels complete without a conclusion, you can skip it
@@ -138,9 +134,7 @@ STRICT RULES:
 CRITICAL RULES:
 - The final blog post must be between 800 and 1200 words
 - Count the words carefully before outputting
-- Do not use styled boxes, callout boxes, or special containers for examples
 - Keep the design clean, minimal, and readable
-- Do NOT bold the focus keyword or any keyword
 
 CRITICAL JSON RULES:
 1. The content field must be a SINGLE string (no concatenation with +)

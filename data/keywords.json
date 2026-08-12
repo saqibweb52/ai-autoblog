@@ -294,7 +294,28 @@
         "categories": [
             6
         ],
-        "status": "pending",
+        "status": "done",
         "created_at": "2026-08-09 11:52:49"
+    },
+    {
+        "id": "kw_6a7acb673a0991.99806247",
+        "keyword": "which stage of ai will not need humans",
+        "author_id": 3,
+        "categories": [
+            8
+        ],
+        "status": "done",
+        "created_at": "2026-08-11 07:12:39"
+    },
+    {
+        "id": "kw_6a7c4b53aa40a4.40018426",
+        "keyword": "Can Intelligence Exist Without Consciousness?",
+        "author_id": 3,
+        "categories": [
+            3,
+            7
+        ],
+        "status": "done",
+        "created_at": "2026-08-12 10:30:43"
     }
 ]
