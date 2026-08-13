@@ -17,7 +17,7 @@ class AIA_Logger {
             mkdir($log_dir, 0755, true);
         }
         
-        $this->log_file = $log_dir . 'ai-autoblog-' . date('Y-m-d') . '.log';
+        $this->log_file = $log_dir . 'blog-autom-' . date('Y-m-d') . '.log';
     }
     
     public function log($message, $type = 'info') {

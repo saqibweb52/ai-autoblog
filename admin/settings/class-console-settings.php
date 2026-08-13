@@ -15,11 +15,11 @@ class AIA_Console_Settings {
     
     public function add_submenu_page() {
         add_submenu_page(
-            'ai-autoblog',
+            'blog-autom',
             'Console Settings',
             'Console Settings',
             'manage_options',
-            'ai-autoblog-console-settings',
+            'blog-autom-console-settings',
             array($this, 'render_page')
         );
     }

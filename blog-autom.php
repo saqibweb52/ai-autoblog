@@ -3,7 +3,7 @@
 * Plugin Name: Blog Autom
 * Plugin URI: https://designzeros.com/blog-autom
 * Description: Automated blog post generation using AI Gemini with IndexNow support
-* Version: 5.4.0
+* Version: 5.6.0
 * Author: Shahab Saqib
 * License: GPL v2 or later
 * Text Domain: designzeros.com
@@ -26,6 +26,33 @@ define( 'AIA_VERSION', '5.4.0' );
 define( 'AIA_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AIA_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'AIA_DATA_DIR', AIA_PLUGIN_DIR . 'data/' );
+
+// Register custom cron schedules immediately so they are available during
+// plugin activation as well as normal plugin initialization.
+function aia_register_cron_schedules( $schedules ) {
+    $schedules['every_120_minutes'] = array(
+        'interval' => 7200,
+        'display'  => __( 'Every 120 Minutes (2 Hours)', 'blog-autom' ),
+    );
+    $schedules['every_60_minutes'] = array(
+        'interval' => 3600,
+        'display'  => __( 'Every 60 Minutes', 'blog-autom' ),
+    );
+    $schedules['every_30_minutes'] = array(
+        'interval' => 1800,
+        'display'  => __( 'Every 30 Minutes', 'blog-autom' ),
+    );
+    $schedules['every_5_minutes'] = array(
+        'interval' => 300,
+        'display'  => __( 'Every 5 Minutes', 'blog-autom' ),
+    );
+    $schedules['every_minute'] = array(
+        'interval' => 60,
+        'display'  => __( 'Every Minute', 'blog-autom' ),
+    );
+    return $schedules;
+}
+add_filter( 'cron_schedules', 'aia_register_cron_schedules' );
 
 // Initialize plugin
 require_once AIA_PLUGIN_DIR . 'includes/class-plugin-init.php';
@@ -129,13 +156,13 @@ function aia_activate_plugin() {
         update_option('aia_console_auto_submit', 1);
     }
     
-    // Schedule the cron events
-    if (!wp_next_scheduled('aia_process_keywords')) {
-        wp_schedule_event(time(), 'every_5_minutes', 'aia_process_keywords');
-    }
-    if (!wp_next_scheduled('aia_sync_sitemaps')) {
-        wp_schedule_event(time(), 'daily', 'aia_sync_sitemaps');
-    }
+    // Schedule the cron events.
+    // The custom schedule is registered above, so activation can safely use it.
+    wp_clear_scheduled_hook('aia_process_keywords');
+    wp_clear_scheduled_hook('aia_sync_sitemaps');
+
+    wp_schedule_event(time() + 60, 'every_5_minutes', 'aia_process_keywords');
+    wp_schedule_event(time() + 60, 'daily', 'aia_sync_sitemaps');
 }
 
 // Deactivation hook
@@ -156,7 +183,7 @@ add_action('admin_enqueue_scripts', function() {
 
 // Remove authors page from menu
 add_action('admin_menu', function() {
-    remove_submenu_page('ai-autoblog', 'ai-autoblog-authors');
+    remove_submenu_page('blog-autom', 'blog-autom-authors');
 }, 99);
 
 // Serve indexnow-key.txt from database

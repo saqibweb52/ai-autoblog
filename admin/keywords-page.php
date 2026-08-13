@@ -19,11 +19,11 @@ class AIA_Keywords_Page {
     
     public function add_submenu_page() {
         add_submenu_page(
-            'ai-autoblog',
+            'blog-autom',
             'Keywords Manager',
             'Keywords',
             'manage_options',
-            'ai-autoblog-keywords',
+            'blog-autom-keywords',
             array($this, 'render_page')
         );
     }
@@ -150,11 +150,11 @@ class AIA_Keywords_Page {
                 <!-- Search Form -->
                 <div class="aia-search-box">
                     <form method="get" action="">
-                        <input type="hidden" name="page" value="ai-autoblog-keywords">
+                        <input type="hidden" name="page" value="blog-autom-keywords">
                         <input type="text" name="s" value="<?php echo esc_attr($search_query); ?>" placeholder="Search keywords..." class="aia-search-input">
                         <button type="submit" class="button">Search</button>
                         <?php if (!empty($search_query)): ?>
-                            <a href="?page=ai-autoblog-keywords" class="button">Clear</a>
+                            <a href="?page=blog-autom-keywords" class="button">Clear</a>
                         <?php endif; ?>
                     </form>
                 </div>
@@ -280,7 +280,7 @@ class AIA_Keywords_Page {
                     <?php endif; ?>
                     
                 <?php else: ?>
-                    <p>No keywords found. <?php if (!empty($search_query)): ?>Try a different search term or <a href="?page=ai-autoblog-keywords">clear the search</a>.<?php else: ?>Add keywords using the form above.<?php endif; ?></p>
+                    <p>No keywords found. <?php if (!empty($search_query)): ?>Try a different search term or <a href="?page=blog-autom-keywords">clear the search</a>.<?php else: ?>Add keywords using the form above.<?php endif; ?></p>
                 <?php endif; ?>
             </div>
             

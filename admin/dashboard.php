@@ -15,7 +15,7 @@ class AIA_Admin_Dashboard {
         'Blog Autom',
         'Blog Autom',
         'manage_options',
-        'ai-autoblog',
+        'blog-autom',
         array($this, 'render_dashboard'),
         'data:image/svg+xml;base64,' . base64_encode(file_get_contents(AIA_PLUGIN_DIR . 'assets/icon.svg')),
         30
@@ -48,7 +48,7 @@ class AIA_Admin_Dashboard {
 
             <div class="aia-quick-actions">
                 <h2>Quick Actions</h2>
-                <a href="?page=ai-autoblog-keywords" class="button button-primary">Add Keywords</a>
+                <a href="?page=blog-autom-keywords" class="button button-primary">Add Keywords</a>
 
                 <?php if (!empty($pending_keywords)): ?>
                     <button id="aia-manual-generate" class="button button-secondary">Generate Next Post Now</button>

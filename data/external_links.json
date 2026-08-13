@@ -3,14 +3,14 @@
         {
             "url": "https:\/\/aryzohn.com\/post-sitemap.xml",
             "sitemap_id": "1de3edbf3ddf8d2468014a0a8301b1d7",
-            "last_sync": "2026-08-12 11:07:58",
+            "last_sync": "2026-08-13 08:04:57",
             "links_count": 15,
             "hidden": true
         },
         {
             "url": "https:\/\/aryzohn.com\/page-sitemap.xml",
             "sitemap_id": "99e5a8b533214be0459a42645b243b66",
-            "last_sync": "2026-08-12 11:07:58",
+            "last_sync": "2026-08-13 08:04:57",
             "links_count": 15,
             "hidden": true
         }
@@ -122,5 +122,5 @@
             "sitemap_source": "99e5a8b533214be0459a42645b243b66"
         }
     ],
-    "last_sitemap_update": "2026-08-12 11:07:58"
+    "last_sitemap_update": "2026-08-13 08:04:57"
 }

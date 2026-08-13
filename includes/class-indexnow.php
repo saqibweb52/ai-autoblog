@@ -46,11 +46,11 @@ class AIA_IndexNow {
      */
     public function add_admin_menu() {
         add_submenu_page(
-            'ai-autoblog',
+            'blog-autom',
             'IndexNow Status',
             'IndexNow Status',
             'manage_options',
-            'ai-autoblog-indexnow',
+            'blog-autom-indexnow',
             array($this, 'render_status_page')
         );
     }

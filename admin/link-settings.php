@@ -26,11 +26,11 @@ class AIA_Link_Settings {
     
     public function add_submenu_page() {
         add_submenu_page(
-            'ai-autoblog',
+            'blog-autom',
             'Link Management',
             'Link Management',
             'manage_options',
-            'ai-autoblog-links',
+            'blog-autom-links',
             array($this, 'render_page')
         );
     }
@@ -40,7 +40,7 @@ class AIA_Link_Settings {
      */
     public function process_forms() {
         // Only process on our page
-        if (!isset($_GET['page']) || $_GET['page'] !== 'ai-autoblog-links') {
+        if (!isset($_GET['page']) || $_GET['page'] !== 'blog-autom-links') {
             return;
         }
         

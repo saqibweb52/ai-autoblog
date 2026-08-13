@@ -18,11 +18,11 @@ class AIA_AI_Settings {
     
     public function add_submenu_page() {
         add_submenu_page(
-            'ai-autoblog',
+            'blog-autom',
             'AI Settings',
             'AI Settings',
             'manage_options',
-            'ai-autoblog-ai-settings',
+            'blog-autom-ai-settings',
             array($this, 'render_page')
         );
     }

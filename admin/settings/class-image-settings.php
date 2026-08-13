@@ -28,11 +28,11 @@ class AIA_Image_Settings {
     
     public function add_submenu_page() {
         add_submenu_page(
-            'ai-autoblog',
+            'blog-autom',
             'Image Settings',
             'Image Settings',
             'manage_options',
-            'ai-autoblog-image-settings',
+            'blog-autom-image-settings',
             array($this, 'render_page')
         );
     }

@@ -13,11 +13,11 @@ class AIA_Posts_Page {
     
     public function add_submenu_page() {
         add_submenu_page(
-            'ai-autoblog',
+            'blog-autom',
             'Generated Posts',
             'Generated Posts',
             'manage_options',
-            'ai-autoblog-posts',
+            'blog-autom-posts',
             array($this, 'render_page')
         );
     }

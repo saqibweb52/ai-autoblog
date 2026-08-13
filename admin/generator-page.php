@@ -14,11 +14,11 @@ class AIA_Generator_Page {
 
     public function add_submenu_page() {
         add_submenu_page(
-            'ai-autoblog',
+            'blog-autom',
             'Manual Generator',
             'Manual Generate',
             'manage_options',
-            'ai-autoblog-generator',
+            'blog-autom-generator',
             array($this, 'render_page')
         );
     }
@@ -47,7 +47,7 @@ class AIA_Generator_Page {
                                         <?php endforeach; ?>
                                     </select>
                                 <?php else: ?>
-                                    <p class="description">No pending keywords available. <a href="?page=ai-autoblog-keywords">Add keywords first</a>.</p>
+                                    <p class="description">No pending keywords available. <a href="?page=blog-autom-keywords">Add keywords first</a>.</p>
                                 <?php endif; ?>
                             </td>
                         </tr>

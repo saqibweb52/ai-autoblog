@@ -86,7 +86,7 @@
 
 1. Go to **Plugins → Add New**
 2. Click **Upload Plugin**
-3. Upload `ai-autoblog.zip`
+3. Upload `blog-autom.zip`
 4. Click **Install Now**
 5. Activate the plugin
 

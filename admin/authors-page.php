@@ -16,11 +16,11 @@ class AIA_Authors_Page {
     
     public function add_submenu_page() {
         add_submenu_page(
-            'ai-autoblog',
+            'blog-autom',
             'Author Styles',
             'Author Styles',
             'manage_options',
-            'ai-autoblog-authors',
+            'blog-autom-authors',
             array($this, 'render_page')
         );
     }
@@ -280,6 +280,6 @@ class AIA_Authors_Page {
         }
         
         // Redirect to refresh the page
-        echo '<script>window.location.href = "?page=ai-autoblog-authors";</script>';
+        echo '<script>window.location.href = "?page=blog-autom-authors";</script>';
     }
 }
