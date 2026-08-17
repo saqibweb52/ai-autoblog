@@ -235,6 +235,20 @@ class AIA_Keywords_Page {
                                         </td>
                                         <td><?php echo esc_html($keyword['created_at']); ?></td>
                                         <td>
+                                            <?php if ($keyword['status'] === 'pending'): ?>
+                                                <button
+                                                    type="button"
+                                                    class="button button-small aia-generate-keyword"
+                                                    data-keyword-id="<?php echo esc_attr($keyword['id']); ?>"
+                                                >
+                                                    Generate
+                                                </button>
+                                            <?php elseif ($keyword['status'] === 'processing'): ?>
+                                                <button type="button" class="button button-small" disabled>
+                                                    Processing...
+                                                </button>
+                                            <?php endif; ?>
+
                                             <form method="post" style="display:inline;">
                                                 <input type="hidden" name="delete_id" value="<?php echo esc_attr($keyword['id']); ?>">
                                                 <button type="submit" name="aia_delete_keyword" class="button button-small delete" onclick="return confirm('Delete this keyword?');">
@@ -620,6 +634,59 @@ class AIA_Keywords_Page {
         }
         
         jQuery(document).ready(function($) {
+            $('.aia-generate-keyword').on('click', function() {
+                var button = $(this);
+                var keywordId = button.data('keyword-id');
+
+                if (!keywordId) {
+                    alert('Invalid keyword.');
+                    return;
+                }
+
+                if (!confirm('Start generating a post for this keyword now?')) {
+                    return;
+                }
+
+                button.prop('disabled', true).text('Generating...');
+
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'aia_generate_keyword',
+                        keyword_id: keywordId,
+                        nonce: '<?php echo esc_js(wp_create_nonce('aia_generate_keyword')); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            button.text('Generated!');
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 700);
+                        } else {
+                            var message = response.data && response.data.message
+                                ? response.data.message
+                                : 'Could not start generation.';
+                            alert(message);
+                            button.prop('disabled', false).text('Generate');
+                        }
+                    },
+                    error: function(xhr) {
+                        var message = 'Could not generate the post.';
+                        if (xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                            message = xhr.responseJSON.data.message;
+                        } else if (xhr.responseText) {
+                            try {
+                                var parsed = JSON.parse(xhr.responseText);
+                                if (parsed.data && parsed.data.message) message = parsed.data.message;
+                            } catch (e) {}
+                        }
+                        alert(message);
+                        button.prop('disabled', false).text('Generate');
+                    }
+                });
+            });
+
             $('#keywords').on('keydown', function(e) {
                 if (e.ctrlKey && e.keyCode === 13) {
                     $('form[method="post"]').first().submit();

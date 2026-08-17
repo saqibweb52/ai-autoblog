@@ -1,362 +1,44 @@
 [
     {
-        "keyword": "AI Hacking",
-        "author_id": 2,
-        "status": "done",
-        "created_at": "2026-06-27 11:01:45",
-        "id": "kw_6a69da61396c33.68622455"
-    },
-    {
-        "keyword": "Danger of Ai",
-        "author_id": 3,
-        "status": "done",
-        "created_at": "2026-06-28 10:38:12",
-        "id": "kw_6a69da61396c80.31326083"
-    },
-    {
-        "keyword": "New Upcoming ais",
+        "id": "kw_6a804d978408f9.74482705",
+        "keyword": "Best Coding Ai",
         "author_id": 1,
+        "categories": [],
         "status": "done",
-        "created_at": "2026-06-28 10:52:10",
-        "id": "kw_6a69da61396c94.58855902"
+        "status_updated_at": 1786793598,
+        "created_at": "2026-08-15 11:29:27"
     },
     {
-        "keyword": "intelligent software",
-        "author_id": 2,
-        "status": "done",
-        "created_at": "2026-07-19 11:51:07",
-        "id": "kw_6a69da61396cd6.22558128"
-    },
-    {
-        "keyword": "Intelligent Software",
-        "author_id": 2,
-        "status": "done",
-        "created_at": "2026-07-20 09:59:32",
-        "id": "kw_6a69da61396ce3.87474868"
-    },
-    {
-        "keyword": "intelligent software",
-        "author_id": 1,
-        "status": "done",
-        "created_at": "2026-07-20 10:10:03",
-        "id": "kw_6a69da61396cf8.48474830"
-    },
-    {
-        "keyword": "Ai Types",
-        "author_id": 3,
-        "status": "done",
-        "created_at": "2026-07-20 10:17:25",
-        "id": "kw_6a69da61396d09.95294069"
-    },
-    {
-        "keyword": "seo marketing",
-        "author_id": 1,
-        "status": "done",
-        "created_at": "2026-07-20 10:22:15",
-        "id": "kw_6a69da61396d17.03110794"
-    },
-    {
-        "keyword": "data scince",
-        "author_id": 1,
-        "status": "done",
-        "created_at": "2026-07-20 10:25:47",
-        "id": "kw_6a69da61396d21.01300738"
-    },
-    {
-        "keyword": "blow writing",
-        "author_id": 2,
-        "status": "done",
-        "created_at": "2026-07-20 11:08:30",
-        "id": "kw_6a69da61396d33.75820798"
-    },
-    {
-        "keyword": "wordpress tips",
-        "author_id": 1,
-        "status": "done",
-        "created_at": "2026-07-20 11:24:52",
-        "id": "kw_6a69da61396d48.71484478"
-    },
-    {
-        "keyword": "keyword research",
-        "author_id": 1,
-        "status": "done",
-        "created_at": "2026-07-20 11:30:22",
-        "id": "kw_6a69da61396d52.27029635"
-    },
-    {
-        "keyword": "AI bubble",
-        "author_id": 2,
-        "status": "done",
-        "created_at": "2026-07-20 11:35:58",
-        "id": "kw_6a69da61396d67.97651169"
-    },
-    {
-        "keyword": "Ai Power Consumption",
-        "author_id": 3,
-        "status": "done",
-        "created_at": "2026-07-21 09:37:19",
-        "id": "kw_6a69da61396d73.25706012"
-    },
-    {
-        "keyword": "New Chines Ais",
-        "author_id": 1,
-        "status": "done",
-        "created_at": "2026-07-21 09:51:13",
-        "id": "kw_6a69da61396d88.78110731"
-    },
-    {
-        "keyword": "Bloging",
-        "author_id": 1,
-        "status": "done",
-        "created_at": "2026-07-21 10:42:27",
-        "id": "kw_6a69da61396d91.58388825"
-    },
-    {
-        "keyword": "New processer type",
-        "author_id": 3,
-        "status": "done",
-        "created_at": "2026-07-21 11:23:44",
-        "id": "kw_6a69da61396da2.64519020"
-    },
-    {
-        "keyword": "Next Gen Ai",
-        "author_id": 1,
-        "status": "done",
-        "created_at": "2026-07-21 11:50:55",
-        "id": "kw_6a69da61396db9.72799850"
-    },
-    {
-        "keyword": "smart chatbot",
-        "author_id": 2,
-        "status": "done",
-        "created_at": "2026-07-27 10:40:34",
-        "id": "kw_6a69da61396dc0.98066228"
-    },
-    {
-        "keyword": "ai search engine",
-        "author_id": 1,
-        "status": "done",
-        "created_at": "2026-07-27 10:49:12",
-        "id": "kw_6a69da61396dd0.30457583"
-    },
-    {
-        "keyword": "laravel tips",
-        "author_id": 1,
-        "status": "done",
-        "created_at": "2026-07-29 08:29:22",
-        "id": "kw_6a69da61396e00.28869720"
-    },
-    {
-        "keyword": "wordpress seo",
-        "author_id": 2,
-        "status": "done",
-        "created_at": "2026-07-29 08:39:31",
-        "id": "kw_6a69da61396e23.89410846"
-    },
-    {
-        "id": "kw_6a69dc80bf0366.36699332",
-        "keyword": "wordpress",
-        "author_id": 1,
-        "categories": [
-            33
-        ],
-        "status": "done",
-        "created_at": "2026-07-29 10:57:04"
-    },
-    {
-        "id": "kw_6a742fda1d5149.26946442",
-        "keyword": "AI lead generation",
-        "author_id": 3,
-        "categories": [
-            33,
-            7,
-            8
-        ],
-        "status": "done",
-        "created_at": "2026-08-06 06:55:22"
-    },
-    {
-        "id": "kw_6a744a69d33049.25907318",
-        "keyword": "Free AI tools",
-        "author_id": 3,
-        "categories": [
-            33,
-            8
-        ],
-        "status": "done",
-        "created_at": "2026-08-06 08:48:41"
-    },
-    {
-        "id": "kw_6a770fa10fc8c3.52418772",
-        "keyword": "AI for marketing",
-        "author_id": 1,
-        "categories": [
-            33
-        ],
-        "status": "done",
-        "created_at": "2026-08-08 11:14:41"
-    },
-    {
-        "id": "kw_6a7718c822e9a6.57312417",
-        "keyword": "AI for small businesses",
-        "author_id": 1,
-        "categories": [
-            33
-        ],
-        "status": "done",
-        "created_at": "2026-08-08 11:53:44"
-    },
-    {
-        "id": "kw_6a781f6ec96113.15778692",
-        "keyword": "should you use AI for content",
-        "author_id": 1,
-        "categories": [
-            6,
-            7
-        ],
-        "status": "done",
-        "created_at": "2026-08-09 06:34:22"
-    },
-    {
-        "id": "kw_6a783b8f62e6f6.18270329",
-        "keyword": "should you use AI for content",
-        "author_id": 2,
-        "categories": [
-            32
-        ],
-        "status": "done",
-        "created_at": "2026-08-09 08:34:23"
-    },
-    {
-        "id": "kw_6a783dc2dc5e73.57071515",
-        "keyword": "seo",
-        "author_id": 3,
-        "categories": [
-            6
-        ],
-        "status": "done",
-        "created_at": "2026-08-09 08:43:46"
-    },
-    {
-        "id": "kw_6a784de7ed0293.18303034",
-        "keyword": "laravel tips",
-        "author_id": 3,
-        "categories": [
-            7
-        ],
-        "status": "done",
-        "created_at": "2026-08-09 09:52:39"
-    },
-    {
-        "id": "kw_6a78507d316163.89270000",
-        "keyword": "laravel tips",
-        "author_id": 1,
-        "categories": [
-            7
-        ],
-        "status": "done",
-        "created_at": "2026-08-09 10:03:41"
-    },
-    {
-        "id": "kw_6a78524574eea7.44286499",
-        "keyword": "wordpress seo tips",
-        "author_id": 1,
-        "categories": [
-            7
-        ],
-        "status": "done",
-        "created_at": "2026-08-09 10:11:17"
-    },
-    {
-        "id": "kw_6a7859bba70f04.47427484",
-        "keyword": "wordpress seo tips",
-        "author_id": 3,
-        "categories": [
-            6
-        ],
-        "status": "done",
-        "created_at": "2026-08-09 10:43:07"
-    },
-    {
-        "id": "kw_6a786055e56801.39290579",
-        "keyword": "wordpress seo tips",
-        "author_id": 1,
-        "categories": [
-            33
-        ],
-        "status": "done",
-        "created_at": "2026-08-09 11:11:17"
-    },
-    {
-        "id": "kw_6a786a11d54942.71430485",
-        "keyword": "humans without ai",
-        "author_id": 3,
-        "categories": [
-            6
-        ],
-        "status": "done",
-        "created_at": "2026-08-09 11:52:49"
-    },
-    {
-        "id": "kw_6a7acb673a0991.99806247",
-        "keyword": "which stage of ai will not need humans",
-        "author_id": 3,
-        "categories": [
-            8
-        ],
-        "status": "done",
-        "created_at": "2026-08-11 07:12:39"
-    },
-    {
-        "id": "kw_6a7c4b53aa40a4.40018426",
-        "keyword": "Can Intelligence Exist Without Consciousness?",
-        "author_id": 3,
-        "categories": [
-            3,
-            7
-        ],
-        "status": "done",
-        "created_at": "2026-08-12 10:30:43"
-    },
-    {
-        "id": "kw_6a7d746573e611.88503925",
-        "keyword": "Does AI Need a Body to Become Truly Intelligent",
-        "author_id": 1,
-        "categories": [
-            33,
-            7
-        ],
-        "status": "processing",
-        "created_at": "2026-08-13 07:38:13"
-    },
-    {
-        "id": "kw_6a7d7a29a93ae5.36130444",
-        "keyword": "humans without ai",
-        "author_id": 2,
-        "categories": [
-            33
-        ],
-        "status": "done",
-        "created_at": "2026-08-13 08:02:49"
-    },
-    {
-        "id": "kw_6a7d7f5d5287e9.18909663",
-        "keyword": "Does AI Need a Body to Become Truly Intelligent",
-        "author_id": 1,
-        "categories": [
-            33
-        ],
-        "status": "processing",
-        "created_at": "2026-08-13 08:25:01"
-    },
-    {
-        "id": "kw_6a7d7fc2caedb2.54578149",
+        "id": "kw_6a81607ccf0630.68341714",
         "keyword": "humans without ai",
         "author_id": 3,
         "categories": [
             33
         ],
-        "status": "pending",
-        "created_at": "2026-08-13 08:26:42"
+        "status": "done",
+        "status_updated_at": 1786864293,
+        "created_at": "2026-08-16 07:02:20"
+    },
+    {
+        "id": "kw_6a82ed22703014.24227886",
+        "keyword": "plugin not working in wordpress",
+        "author_id": 2,
+        "categories": [
+            33
+        ],
+        "status": "done",
+        "status_updated_at": 1786965415,
+        "created_at": "2026-08-17 11:14:42"
+    },
+    {
+        "id": "kw_6a82f38ac1f866.54197204",
+        "keyword": "humans without ai",
+        "author_id": 3,
+        "categories": [
+            33
+        ],
+        "status": "done",
+        "status_updated_at": 1786967058,
+        "created_at": "2026-08-17 11:42:02"
     }
 ]

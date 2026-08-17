@@ -445,8 +445,8 @@ class AIA_IndexNow {
             return false;
         }
         
-        // Check if at least one API key is configured
-        if (empty($this->bing_api_key) && empty($this->google_api_key)) {
+        // IndexNow is supported here through Bing only. Google does not use an IndexNow endpoint.
+        if (empty($this->bing_api_key)) {
             return false;
         }
         
@@ -494,6 +494,13 @@ class AIA_IndexNow {
      * Submit post to IndexNow
      */
     public function submit_post_to_indexnow($post_id, $action = 'publish') {
+        // Never submit anything when IndexNow is disabled in plugin settings.
+        if (!$this->enabled) {
+            $logger = new AIA_Logger();
+            $logger->log("IndexNow: Submission skipped for post {$post_id} because IndexNow is disabled.", 'info');
+            return false;
+        }
+
         $post = get_post($post_id);
         if (!$post || $post->post_status !== 'publish') {
             return false;
@@ -556,20 +563,25 @@ class AIA_IndexNow {
      * Get engines to submit based on settings
      */
     private function get_engines_to_submit() {
-        $engines = [];
-        if ($this->search_engine === 'both' || $this->search_engine === 'bing') {
-            $engines[] = 'bing';
+        // Google does NOT support IndexNow. Never send IndexNow requests to Google.
+        // The plugin only submits through Bing's official IndexNow endpoint.
+        if (!$this->enabled || empty($this->bing_api_key)) {
+            return [];
         }
-        if ($this->search_engine === 'both' || $this->search_engine === 'google') {
-            $engines[] = 'google';
-        }
-        return $engines;
+
+        return ['bing'];
     }
     
     /**
      * Delete post from IndexNow
      */
     private function delete_post_from_indexnow($post_id) {
+        if (!$this->enabled) {
+            $logger = new AIA_Logger();
+            $logger->log("IndexNow: Delete notification skipped for post {$post_id} because IndexNow is disabled.", 'info');
+            return false;
+        }
+
         $url = get_permalink($post_id);
         $full_url = $this->get_full_url($url);
         
@@ -605,12 +617,15 @@ class AIA_IndexNow {
      * Send to IndexNow endpoint
      */
     private function send_to_indexnow($engine, $data, $action = 'publish') {
-        $endpoints = [
-            'bing' => 'https://www.bing.com/indexnow',
-            'google' => 'https://www.google.com/indexnow'
-        ];
-        
-        $url = $endpoints[$engine] ?? $endpoints['bing'];
+        // IndexNow endpoint: Bing only. Google has no IndexNow endpoint.
+        if ($engine !== 'bing') {
+            return [
+                'success' => false,
+                'message' => 'Unsupported IndexNow engine. Only Bing is supported.'
+            ];
+        }
+
+        $url = 'https://www.bing.com/indexnow';
         
         $response = wp_remote_post($url, [
             'headers' => [
@@ -652,9 +667,15 @@ class AIA_IndexNow {
                 'message' => 'Too many requests. Please wait and try again.'
             ];
         } else {
+            // Do not dump remote HTML/error pages into the plugin log.
+            $clean_body = trim(wp_strip_all_tags((string) $body));
+            if (strlen($clean_body) > 300) {
+                $clean_body = substr($clean_body, 0, 300) . '...';
+            }
+
             return [
                 'success' => false,
-                'message' => 'Error ' . $status_code . ': ' . $body
+                'message' => 'Error ' . $status_code . ($clean_body !== '' ? ': ' . $clean_body : '')
             ];
         }
     }

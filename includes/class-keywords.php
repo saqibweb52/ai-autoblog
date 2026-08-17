@@ -58,6 +58,7 @@ class AIA_Keywords_Manager {
             'author_id' => intval($author_id),
             'categories' => array_map('intval', $categories),
             'status' => 'pending',
+            'status_updated_at' => current_time('timestamp'),
             'created_at' => current_time('mysql')
         ];
         
@@ -76,6 +77,7 @@ class AIA_Keywords_Manager {
             if ((is_string($identifier) && isset($keyword['id']) && $keyword['id'] === $identifier) ||
                 (is_int($identifier) && $keyword === $keywords[$identifier])) {
                 $keyword['status'] = $status;
+                $keyword['status_updated_at'] = current_time('timestamp');
                 return $this->save_keywords($keywords);
             }
         }
@@ -83,6 +85,43 @@ class AIA_Keywords_Manager {
         return false;
     }
     
+    /**
+     * Reset keywords that have been stuck in processing for too long.
+     * This prevents a failed/fatal background request from leaving a keyword
+     * in processing forever.
+     */
+    public function recover_stuck_processing_keywords($timeout = 300) {
+        $keywords = $this->get_all_keywords();
+        $changed = false;
+        $now = current_time('timestamp');
+
+        foreach ($keywords as &$keyword) {
+            if (!isset($keyword['status']) || $keyword['status'] !== 'processing') {
+                continue;
+            }
+
+            $updated = isset($keyword['status_updated_at'])
+                ? intval($keyword['status_updated_at'])
+                : 0;
+
+            // Old installations may not have a timestamp. Treat those as stale
+            // so they can recover automatically instead of remaining stuck.
+            if ($updated <= 0 || ($now - $updated) >= intval($timeout)) {
+                $keyword['status'] = 'pending';
+                $keyword['status_updated_at'] = $now;
+                $changed = true;
+            }
+        }
+        unset($keyword);
+
+        if ($changed) {
+            $this->save_keywords($keywords);
+            return true;
+        }
+
+        return false;
+    }
+
     public function get_pending_keywords() {
         $keywords = $this->get_all_keywords();
         return array_filter($keywords, function($k) {

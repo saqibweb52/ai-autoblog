@@ -146,20 +146,32 @@ class AIA_Cron_Handler {
         $runtime = $this->get_runtime_state();
         
         // Don't process if already processing
-        if ($runtime['status'] === 'processing') {
-            $last_activity = $runtime['last_activity'] ?? 0;
-            // Allow processing if last activity was more than 5 minutes ago (stuck process)
-            if (time() - $last_activity < 300) {
+        if (($runtime['status'] ?? 'idle') === 'processing') {
+            $last_activity = isset($runtime['last_activity']) ? intval($runtime['last_activity']) : 0;
+            // Allow processing if last activity was more than 5 minutes ago.
+            if ($last_activity && (time() - $last_activity < 300)) {
+                $current_keyword = $runtime['current_keyword'] ?? 'unknown';
+                $this->logger->log(
+                    "Cannot process: another generation is active (keyword: {$current_keyword}).",
+                    'info'
+                );
                 return false;
             }
+
+            // A stale runtime state should never block the queue forever.
+            $this->update_runtime_state('idle');
         }
         
-        // Check max posts per day setting
-        $max_posts = get_option('aia_max_posts_per_day', 10);
+        // Automatic WP-Cron generation respects this limit. Manual generation
+        // never calls can_process().
+        $max_posts = max(1, intval(get_option('aia_max_posts_per_day', 10)));
         $today_posts = $this->get_today_posts_count();
         
         if ($today_posts >= $max_posts) {
-            $this->logger->log("Daily limit reached. {$today_posts}/{$max_posts} posts today.", 'info');
+            $this->logger->log(
+                "Automatic generation skipped: daily AI-post limit reached ({$today_posts}/{$max_posts}).",
+                'info'
+            );
             return false;
         }
         
@@ -168,24 +180,23 @@ class AIA_Cron_Handler {
     
     protected function get_today_posts_count() {
         global $wpdb;
-        
-        $today = date('Y-m-d');
+
+        // Use WordPress's configured timezone rather than the PHP/server timezone.
+        $today = current_time('Y-m-d');
+
         $count = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->posts} 
-            WHERE post_status = 'publish' 
-            AND post_type = 'post' 
-            AND DATE(post_date) = %s
-            AND EXISTS (
-                SELECT 1 FROM {$wpdb->postmeta} 
-                WHERE post_id = {$wpdb->posts}.ID 
-                AND meta_key = '_aia_generated'
-            )",
+            "SELECT COUNT(DISTINCT p.ID)
+             FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '_aia_generated'
+             WHERE p.post_status = 'publish'
+               AND p.post_type = 'post'
+               AND DATE(p.post_date) = %s",
             $today
         ));
-        
+
         return intval($count);
     }
-    
+
     protected function get_runtime_state() {
         $file = AIA_DATA_DIR . 'runtime_state.json';
         if (file_exists($file)) {

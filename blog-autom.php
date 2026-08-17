@@ -30,6 +30,11 @@ define( 'AIA_DATA_DIR', AIA_PLUGIN_DIR . 'data/' );
 // Register custom cron schedules immediately so they are available during
 // plugin activation as well as normal plugin initialization.
 function aia_register_cron_schedules( $schedules ) {
+    $cron_hours = max( 1, min( 24, intval( get_option( 'aia_cron_interval_hours', 2 ) ) ) );
+    $schedules['aia_custom_interval'] = array(
+        'interval' => $cron_hours * HOUR_IN_SECONDS,
+        'display'  => sprintf( __( 'Every %d hour(s) - Blog Autom', 'blog-autom' ), $cron_hours ),
+    );
     $schedules['every_120_minutes'] = array(
         'interval' => 7200,
         'display'  => __( 'Every 120 Minutes (2 Hours)', 'blog-autom' ),
@@ -156,12 +161,21 @@ function aia_activate_plugin() {
         update_option('aia_console_auto_submit', 1);
     }
     
+    // Automatic generation defaults. Manual generation is independent of these settings.
+    if ( get_option( 'aia_cron_enabled', null ) === null ) {
+        update_option( 'aia_cron_enabled', 1 );
+    }
+    if ( get_option( 'aia_cron_interval_hours', null ) === null ) {
+        update_option( 'aia_cron_interval_hours', 2 );
+    }
+
     // Schedule the cron events.
-    // The custom schedule is registered above, so activation can safely use it.
     wp_clear_scheduled_hook('aia_process_keywords');
     wp_clear_scheduled_hook('aia_sync_sitemaps');
 
-    wp_schedule_event(time() + 60, 'every_5_minutes', 'aia_process_keywords');
+    if ( get_option( 'aia_cron_enabled', 1 ) ) {
+        wp_schedule_event(time() + 60, 'aia_custom_interval', 'aia_process_keywords');
+    }
     wp_schedule_event(time() + 60, 'daily', 'aia_sync_sitemaps');
 }
 
@@ -212,4 +226,4 @@ add_action('init', function() {
 // Usage: https://yourdomain.com/?aia_process_async=1&secret=YOUR_SECRET_KEY
 // ============================================================
 // The secret key is automatically generated and stored as 'aia_async_secret'
-// You can see it in the WordPress options table
+// You can see it in the WordPress options 

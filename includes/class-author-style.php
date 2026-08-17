@@ -7,23 +7,14 @@ if (!defined('ABSPATH')) {
 
 class AIA_Author_Style {
     
-    private $authors_file;
-    
-    public function __construct() {
-        $this->authors_file = AIA_DATA_DIR . 'authors.json';
-        $this->ensure_authors_file_exists();
-    }
-    
-    private function ensure_authors_file_exists() {
-        if (!file_exists($this->authors_file)) {
-            // Create default authors from WordPress users
-            $this->create_default_authors();
-        }
-    }
-    
-    private function create_default_authors() {
+    /**
+     * Get all users with publishing rights
+     */
+    public function get_all_authors() {
         $users = get_users([
-            'role__in' => ['administrator', 'editor', 'author']
+            'role__in' => ['administrator', 'editor', 'author'],
+            'orderby' => 'display_name',
+            'order' => 'ASC'
         ]);
         
         $authors = [];
@@ -31,153 +22,93 @@ class AIA_Author_Style {
             $authors[] = [
                 'author_id' => $user->ID,
                 'name' => $user->display_name,
-                'tone' => 'professional',
-                'audience' => 'general readers',
-                'writing_rules' => ['clear', 'concise', 'engaging']
+                'user_login' => $user->user_login,
+                'user_email' => $user->user_email,
+                'tone' => get_user_meta($user->ID, '_aia_author_tone', true) ?: 'professional',
+                'audience' => get_user_meta($user->ID, '_aia_author_audience', true) ?: 'general readers',
+                'writing_rules' => get_user_meta($user->ID, '_aia_author_writing_rules', true) ?: ['clear', 'concise', 'engaging']
             ];
         }
         
-        // Add default if no users found
-        if (empty($authors)) {
-            $authors[] = [
-                'author_id' => 1,
-                'name' => 'Default Author',
-                'tone' => 'professional',
-                'audience' => 'general readers',
-                'writing_rules' => ['clear', 'concise', 'engaging']
-            ];
-        }
-        
-        file_put_contents($this->authors_file, json_encode($authors, JSON_PRETTY_PRINT));
+        return $authors;
     }
     
-    public function get_all_authors() {
-        if (!file_exists($this->authors_file)) {
-            return [];
-        }
-        $content = file_get_contents($this->authors_file);
-        $authors = json_decode($content, true);
-        
-        // Filter to only include WordPress users that exist
-        $valid_authors = [];
-        foreach ($authors as $author) {
-            $user = get_userdata($author['author_id']);
-            if ($user) {
-                $author['name'] = $user->display_name; // Update name from WP
-                $valid_authors[] = $author;
-            }
-        }
-        
-        // If no valid authors, create defaults
-        if (empty($valid_authors)) {
-            $this->create_default_authors();
-            $content = file_get_contents($this->authors_file);
-            return json_decode($content, true) ?: [];
-        }
-        
-        return $valid_authors;
-    }
-    
+    /**
+     * Get author by ID
+     */
     public function get_author_by_id($author_id) {
-        $authors = $this->get_all_authors();
-        foreach ($authors as $author) {
-            if ($author['author_id'] == $author_id) {
-                return $author;
-            }
+        $user = get_userdata($author_id);
+        if (!$user) {
+            return null;
         }
         
-        // If author not found, try to create default for this user
+        // Check if user has publishing rights
+        if (!user_can($user, 'publish_posts')) {
+            return null;
+        }
+        
+        return [
+            'author_id' => $user->ID,
+            'name' => $user->display_name,
+            'user_login' => $user->user_login,
+            'user_email' => $user->user_email,
+            'tone' => get_user_meta($user->ID, '_aia_author_tone', true) ?: 'professional',
+            'audience' => get_user_meta($user->ID, '_aia_author_audience', true) ?: 'general readers',
+            'writing_rules' => get_user_meta($user->ID, '_aia_author_writing_rules', true) ?: ['clear', 'concise', 'engaging']
+        ];
+    }
+    
+    /**
+     * Get author style for content generation
+     */
+    public function get_author_style($author_id) {
         $user = get_userdata($author_id);
-        if ($user) {
-            $new_author = [
-                'author_id' => $user->ID,
-                'name' => $user->display_name,
+        if (!$user) {
+            return [
                 'tone' => 'professional',
                 'audience' => 'general readers',
-                'writing_rules' => ['clear', 'concise', 'engaging']
-            ];
-            $this->add_author($new_author);
-            return $new_author;
-        }
-        
-        return null;
-    }
-    
-    public function add_author($author_data) {
-        $authors = $this->get_all_authors();
-        
-        // Check if author exists
-        foreach ($authors as &$author) {
-            if ($author['author_id'] == $author_data['author_id']) {
-                $author = $author_data;
-                return $this->save_authors($authors);
-            }
-        }
-        
-        $authors[] = $author_data;
-        return $this->save_authors($authors);
-    }
-    
-    public function update_author($author_id, $data) {
-        $authors = $this->get_all_authors();
-        foreach ($authors as &$author) {
-            if ($author['author_id'] == $author_id) {
-                $author = array_merge($author, $data);
-                return $this->save_authors($authors);
-            }
-        }
-        return false;
-    }
-    
-    public function get_author_style($author_id) {
-        $author = $this->get_author_by_id($author_id);
-        if ($author) {
-            return [
-                'tone' => $author['tone'],
-                'audience' => $author['audience'],
-                'writing_rules' => $author['writing_rules']
+                'writing_rules' => ['clear', 'concise']
             ];
         }
         
         return [
-            'tone' => 'professional',
-            'audience' => 'general readers',
-            'writing_rules' => ['clear', 'concise']
+            'tone' => get_user_meta($user->ID, '_aia_author_tone', true) ?: 'professional',
+            'audience' => get_user_meta($user->ID, '_aia_author_audience', true) ?: 'general readers',
+            'writing_rules' => get_user_meta($user->ID, '_aia_author_writing_rules', true) ?: ['clear', 'concise']
         ];
     }
     
-    private function save_authors($authors) {
-        return file_put_contents($this->authors_file, json_encode($authors, JSON_PRETTY_PRINT));
-    }
-    
-    public function sync_with_wordpress_users() {
-        $wp_users = get_users([
-            'role__in' => ['administrator', 'editor', 'author']
-        ]);
-        
-        $current_authors = $this->get_all_authors();
-        $current_ids = array_column($current_authors, 'author_id');
-        
-        // Add new WordPress users
-        foreach ($wp_users as $user) {
-            if (!in_array($user->ID, $current_ids)) {
-                $current_authors[] = [
-                    'author_id' => $user->ID,
-                    'name' => $user->display_name,
-                    'tone' => 'professional',
-                    'audience' => 'general readers',
-                    'writing_rules' => ['clear', 'concise', 'engaging']
-                ];
-            } else {
-                // Update name
-                foreach ($current_authors as &$author) {
-                    if ($author['author_id'] == $user->ID) {
-                        $author['name'] = $user->display_name;
-                    }
-                }
-            }
+    /**
+     * Update author style in user meta
+     */
+    public function update_author_style($author_id, $tone, $audience, $writing_rules) {
+        $user = get_userdata($author_id);
+        if (!$user) {
+            return false;
         }
         
-        return $this->save_authors($current_authors);
+        update_user_meta($author_id, '_aia_author_tone', sanitize_text_field($tone));
+        update_user_meta($author_id, '_aia_author_audience', sanitize_text_field($audience));
+        update_user_meta($author_id, '_aia_author_writing_rules', array_map('sanitize_text_field', $writing_rules));
+        
+        return true;
+    }
+    
+    /**
+     * Get user role
+     */
+    public function get_user_role($user) {
+        if (is_object($user) && isset($user->roles)) {
+            $roles = $user->roles;
+            return !empty($roles) ? $roles[0] : 'subscriber';
+        }
+        if (is_numeric($user)) {
+            $user_obj = get_userdata($user);
+            if ($user_obj && isset($user_obj->roles)) {
+                $roles = $user_obj->roles;
+                return !empty($roles) ? $roles[0] : 'subscriber';
+            }
+        }
+        return 'subscriber';
     }
 }

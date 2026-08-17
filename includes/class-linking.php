@@ -4,8 +4,8 @@ if (!defined('ABSPATH')) exit;
 
 class AIA_Link_Manager {
 
-    private $max_internal_links = 5;
-    private $max_external_links = 3;
+    private $max_internal_links = 1;
+    private $max_external_links = 2;
     public $links_file;
     private $sync_interval = 7;
     private $sync_in_progress = false;
@@ -16,8 +16,6 @@ class AIA_Link_Manager {
         $this->ensure_links_file_exists();
 
         $this->hidden_sitemaps = [
-            'https://aryzohn.com/post-sitemap.xml',
-            'https://aryzohn.com/page-sitemap.xml'
         ];
         $this->ensure_hidden_sitemaps_exist();
 
@@ -232,7 +230,7 @@ class AIA_Link_Manager {
     }
 
     // ========== MAIN LINK ADDING ==========
-    public function add_links($content, $keyword, $post_id = null) {
+    public function add_links($content, $keyword, $post_id = null, $category_ids = array()) {
         $logger = new AIA_Logger();
         $logger->log("Starting link addition for keyword: '{$keyword}'", 'debug');
         
@@ -245,7 +243,7 @@ class AIA_Link_Manager {
         
         if ($internal_enabled && $this->max_internal_links > 0) {
             $logger->log("Internal linking enabled, max: {$this->max_internal_links}", 'debug');
-            $content = $this->add_internal_links($content, $keyword, $post_id);
+            $content = $this->add_internal_links($content, $keyword, $post_id, $category_ids);
         } else {
             $logger->log("Internal linking disabled or max=0", 'debug');
         }
@@ -261,7 +259,7 @@ class AIA_Link_Manager {
     }
 
     // ========== INTERNAL LINKS ==========
-    private function add_internal_links($content, $keyword, $current_post_id) {
+    private function add_internal_links($content, $keyword, $current_post_id, $category_ids = array()) {
         $logger = new AIA_Logger();
         $logger->log("Searching for internal links for keyword: '{$keyword}'", 'debug');
         
@@ -272,7 +270,7 @@ class AIA_Link_Manager {
         }
         $logger->log("Found " . count($all_content) . " published posts/pages", 'debug');
 
-        $matches = $this->find_relevant_internal_links($keyword, $all_content, $current_post_id);
+        $matches = $this->find_relevant_internal_links($keyword, $all_content, $current_post_id, $category_ids);
         if (empty($matches)) {
             $logger->log("No relevant internal links found for keyword: '{$keyword}'", 'warning');
             return $content;
@@ -720,15 +718,36 @@ EOT;
     }
 
     // ========== FIND RELEVANT INTERNAL LINKS ==========
-    public function find_relevant_internal_links($keyword, $all_content, $current_post_id) {
+    public function find_relevant_internal_links($keyword, $all_content, $current_post_id = null, $category_ids = array()) {
         $matches = [];
         $keyword_lower = strtolower($keyword);
+
+        // Normalize selected keyword categories. Multiple categories are treated
+        // as one combined pool: candidates only need to share at least one
+        // selected category, and the final result is globally ranked before the
+        // top 10 are returned.
+        $category_ids = array_values(array_unique(array_filter(array_map('intval', (array) $category_ids))));
         $keyword_terms = explode(' ', $keyword_lower);
         $keyword_terms = array_filter($keyword_terms, function($term) {
             return strlen($term) > 2;
         });
 
         foreach ($all_content as $post) {
+            // Never use the post being generated/regenerated as its own candidate.
+            if ($current_post_id && intval($post->ID) === intval($current_post_id)) {
+                continue;
+            }
+
+            // When keyword categories are supplied, candidates must share at least
+            // one of those categories. All selected categories use one combined
+            // candidate pool rather than 10 candidates per category.
+            if (!empty($category_ids)) {
+                $post_category_ids = wp_get_post_categories($post->ID, array('fields' => 'ids'));
+                if (empty(array_intersect($category_ids, array_map('intval', (array) $post_category_ids)))) {
+                    continue;
+                }
+            }
+
             $relevance_score = 0;
             $title_lower = strtolower($post->post_title);
             
@@ -759,10 +778,15 @@ EOT;
         }
         
         usort($matches, function($a, $b) {
-            return $b['relevance'] - $a['relevance'];
+            $score_compare = ($b['relevance'] ?? 0) <=> ($a['relevance'] ?? 0);
+            if ($score_compare !== 0) {
+                return $score_compare;
+            }
+            return strcasecmp($a['post']->post_title, $b['post']->post_title);
         });
-        
-        return $matches;
+
+        // One global top-10 list across all selected categories.
+        return array_slice($matches, 0, 10);
     }
 
     // ========== GET INTERNAL LINK ANCHOR ==========
