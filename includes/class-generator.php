@@ -266,7 +266,7 @@ class AIA_Content_Generator {
             'generationConfig' => [
                 'responseMimeType' => 'application/json',
                 'temperature' => 0.6,
-                'maxOutputTokens' => 8192
+                'maxOutputTokens' => 16384
             ]
         ];
         
